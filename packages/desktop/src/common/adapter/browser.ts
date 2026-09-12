@@ -111,7 +111,7 @@ if (win.electronAPI) {
     }
   };
 
-  // 2.简单的指数退避重连，等待服务端在登录成功后接受新连接
+  // 2.简单的指数退避重连，等待服务端重新接受连接
   const scheduleReconnect = () => {
     if (reconnectTimer !== null || !shouldReconnect) {
       return;
@@ -122,22 +122,6 @@ if (win.electronAPI) {
       reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
       connect();
     }, reconnectDelay);
-  };
-
-  // 跳转到登录页（已在登录页则跳过，防止无限刷新循环）
-  // Redirect to the login page (skipped when already there to avoid a reload loop).
-  const redirectToLogin = () => {
-    if (window.location.pathname === '/login' || window.location.hash.includes('/login')) {
-      return;
-    }
-
-    // 短暂延迟以便展示 UI 反馈；用 hash 导航留在 SPA 内（HashRouter），
-    // 避免整页刷新落到空 hash 造成白屏
-    // Short delay to surface any UI feedback; hash navigation stays within the SPA
-    // (HashRouter) instead of a full reload that would land on an empty hash.
-    setTimeout(() => {
-      window.location.hash = '/login';
-    }, 1000);
   };
 
   // 3.建立 WebSocket 连接（或复用已有的 OPEN/CONNECTING 状态）
@@ -185,9 +169,10 @@ if (win.electronAPI) {
           return;
         }
 
-        // 处理认证过期 - 先静默续期，成功则重连，失败才跳转登录页
-        // Handle auth expiration - try a silent refresh first; reconnect on success,
-        // and only fall back to the login page when the refresh token is also dead.
+        // 处理认证过期 - 先静默续期，成功则重连；续期失败则重载页面，
+        // 由服务端重新建立会话。
+        // Handle auth expiration - refresh silently first; reconnect on success, and
+        // reload the page (re-establishing the session) when the refresh fails.
         if (isRealtimeAuthTerminalError(payload)) {
           console.warn('[WebSocket] Authentication expired, attempting silent refresh');
 
@@ -210,7 +195,7 @@ if (win.electronAPI) {
               connect();
               return;
             }
-            redirectToLogin();
+            window.location.reload();
           });
 
           return;
@@ -299,7 +284,8 @@ if (win.electronAPI) {
 
   connect();
 
-  // Expose reconnection control for login flow
+  // Expose reconnection control for code that needs to force a fresh dial
+  // (e.g. after re-establishing a session).
   win.__websocketReconnect = () => {
     shouldReconnect = true;
     reconnectDelay = BASE_RECONNECT_DELAY;

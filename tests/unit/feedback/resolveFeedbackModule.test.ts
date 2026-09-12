@@ -41,7 +41,6 @@ describe('resolveFeedbackModule', () => {
 
   it('returns undefined for the home page and unknown routes', () => {
     expect(resolveFeedbackModule('/guid')).toBeUndefined();
-    expect(resolveFeedbackModule('/login')).toBeUndefined();
     expect(resolveFeedbackModule('/')).toBeUndefined();
   });
 
@@ -56,9 +55,9 @@ describe('resolveFeedbackModule', () => {
       path.resolve(__dirname, '../../../packages/desktop/src/renderer/components/layout/Router.tsx'),
       'utf-8'
     );
-    // Pages where preselecting a module makes no sense (multi-purpose or
-    // pre-auth surfaces where the user picks the module themselves).
-    const moduleLess = new Set(['/guid', '/login', '/test/components']);
+    // Pages where preselecting a module makes no sense (multi-purpose surfaces
+    // where the user picks the module themselves).
+    const moduleLess = new Set(['/guid', '/test/components']);
     const paths = [...routerSrc.matchAll(/path='([^*'][^']*)'/g)].map((m) => m[1]);
     expect(paths.length).toBeGreaterThan(10);
     for (const routePath of paths) {

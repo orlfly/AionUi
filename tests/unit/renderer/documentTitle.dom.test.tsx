@@ -23,8 +23,7 @@ import DocumentTitle, { titleForPath } from '@/renderer/components/layout/Docume
 describe('titleForPath', () => {
   const t = (key: string) => `t(${key})`;
 
-  it('uses the login title on the login route only', () => {
-    expect(titleForPath('/login', t)).toBe('t(login.pageTitle)');
+  it('always returns the global app title (no login route anymore)', () => {
     expect(titleForPath('/guid', t)).toBe('AionUi');
     expect(titleForPath('/conversation/abc', t)).toBe('AionUi');
     expect(titleForPath('/settings/agent', t)).toBe('AionUi');
@@ -32,10 +31,8 @@ describe('titleForPath', () => {
 });
 
 describe('DocumentTitle', () => {
-  it('resets the title to AionUi after leaving the login page', () => {
-    // The old behaviour set document.title once on the login page and never
-    // updated it again, so post-login pages kept the login title.
-    document.title = 'AionUi - stale login title';
+  it('sets the global app title', () => {
+    document.title = 'AionUi - stale title';
     render(
       <MemoryRouter initialEntries={['/guid']}>
         <DocumentTitle />
@@ -44,14 +41,14 @@ describe('DocumentTitle', () => {
     expect(document.title).toBe('AionUi');
   });
 
-  it('sets the localised login title on the login route', () => {
+  it('keeps the global title regardless of language', () => {
     mockLanguage = 'zh-CN';
     render(
-      <MemoryRouter initialEntries={['/login']}>
+      <MemoryRouter initialEntries={['/guid']}>
         <DocumentTitle />
       </MemoryRouter>
     );
-    expect(document.title).toBe('zh:login.pageTitle');
+    expect(document.title).toBe('AionUi');
     mockLanguage = 'en-US';
   });
 });

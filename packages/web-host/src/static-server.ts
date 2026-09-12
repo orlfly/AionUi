@@ -1,11 +1,11 @@
 /**
  * WebUI static server.
  *
- * Serves out/renderer/ as the SPA and reverse-proxies /api/*, /ws, /api/stt/stream,
- * /login and /logout to aioncore. All auth goes to backend's aionui-auth crate;
- * /login and /logout are aionui-auth's top-level paths, the rest live under
- * /api/auth/*. /ws and /api/stt/stream are WebSocket/stream upgrades spliced at
- * TCP level; /api/stt/stream is the STT streaming endpoint.
+ * Serves out/renderer/ as the SPA and reverse-proxies /api/*, /ws and
+ * /api/stt/stream to aioncore. User authentication and registration were
+ * removed, so there are no /login or /logout routes to forward. /ws and
+ * /api/stt/stream are WebSocket/stream upgrades spliced at TCP level;
+ * /api/stt/stream is the STT streaming endpoint.
  *
  * Design: Node native http + serve-handler. No Express. No business routes.
  */
@@ -180,10 +180,8 @@ export async function startStaticServer(opts: StaticServerOptions): Promise<Stat
         return;
       }
 
-      // /api/* — reverse proxy to backend (includes /api/auth/*).
-      // /login and /logout are aionui-auth's top-level auth endpoints: proxy them too
-      // so WebUI browser clients reach the backend without a path-rewrite.
-      if (req.url.startsWith('/api/') || req.url.startsWith('/api?') || req.url === '/login' || req.url === '/logout') {
+      // /api/* — reverse proxy to backend. Includes any backend-managed routes.
+      if (req.url.startsWith('/api/') || req.url.startsWith('/api?')) {
         forwardToBackend(req, res, opts.backendPort);
         return;
       }

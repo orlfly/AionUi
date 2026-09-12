@@ -6,28 +6,23 @@
 
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 /**
  * Single owner of `document.title`.
  *
- * The title used to be set once by the login page and never again, so after
- * logging in the window/tab kept saying "AionUi - Login" — in whatever language
- * the login page happened to render in — for the rest of the session. Deriving
- * it here from the route and the app language keeps it correct across both
- * navigation and language switches.
+ * Auth/registration was removed, so there is no login route to title anymore.
+ * The app always uses the same global title regardless of path or language.
  */
-export function titleForPath(pathname: string, t: (key: string) => string): string {
-  return pathname.startsWith('/login') ? t('login.pageTitle') : 'AionUi';
+export function titleForPath(_pathname: string, _t: (key: string) => string): string {
+  return 'AionUi';
 }
 
 const DocumentTitle: React.FC = () => {
   const { pathname } = useLocation();
-  const { t, i18n } = useTranslation();
 
   useEffect(() => {
-    document.title = titleForPath(pathname, t);
-  }, [pathname, t, i18n.language]);
+    document.title = titleForPath(pathname, () => '');
+  }, [pathname]);
 
   return null;
 };

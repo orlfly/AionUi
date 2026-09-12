@@ -179,9 +179,11 @@ const REFRESH_ENDPOINT = '/api/auth/refresh';
 /**
  * Paths where a 401 is a genuine credential decision rather than an expired
  * session — refreshing and replaying them would be recursive or nonsensical.
+ * User-facing login/logout were removed; only the silent refresh endpoint
+ * needs to be excluded from the 401→refresh path.
  */
 function isAuthEndpoint(path: string): boolean {
-  return path.startsWith(REFRESH_ENDPOINT) || path === '/login' || path === '/logout';
+  return path.startsWith(REFRESH_ENDPOINT);
 }
 
 /**

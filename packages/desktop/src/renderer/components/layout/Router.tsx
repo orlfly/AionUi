@@ -3,7 +3,6 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import AppLoader from '@renderer/components/layout/AppLoader';
 import DocumentTitle from '@renderer/components/layout/DocumentTitle';
 import { useCrossSessionRateLimitNotice } from '@/renderer/hooks/system/useCrossSessionRateLimitNotice';
-import { useAuth } from '@renderer/hooks/context/AuthContext';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
 const Conversation = React.lazy(() => import('@renderer/pages/conversation'));
 const Guid = React.lazy(() => import('@renderer/pages/guid'));
@@ -20,7 +19,6 @@ const WebuiSettings = React.lazy(() => import('@renderer/pages/settings/WebuiSet
 const PetSettings = React.lazy(() => import('@renderer/pages/settings/PetSettings'));
 const ArchivedSettings = React.lazy(() => import('@renderer/pages/settings/ArchivedSettings'));
 const ExtensionSettingsPage = React.lazy(() => import('@renderer/pages/settings/ExtensionSettingsPage'));
-const LoginPage = React.lazy(() => import('@renderer/pages/login'));
 const ComponentsShowcase = React.lazy(() => import('@renderer/pages/TestShowcase'));
 const ScheduledTasksPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage'));
 const TaskDetailPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage/TaskDetailPage'));
@@ -42,36 +40,14 @@ const CapabilitiesRedirect: React.FC = () => {
   return <Navigate to={tab === 'tools' ? '/settings/tools' : '/settings/skills'} replace />;
 };
 
-const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
-  const { status, user } = useAuth();
-  // Mounted once for every authenticated route: the loop warning has to reach
-  // the user even when they are looking at a THIRD conversation, which is the
-  // whole reason it is a broadcast rather than an in-conversation banner.
-  useCrossSessionRateLimitNotice(user?.id);
-
-  if (status === 'checking') {
-    return <AppLoader />;
-  }
-
-  if (status !== 'authenticated') {
-    return <Navigate to='/login' replace />;
-  }
-
-  return React.cloneElement(layout);
-};
-
 const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
-  const { status } = useAuth();
+  useCrossSessionRateLimitNotice();
 
   return (
     <HashRouter>
       <DocumentTitle />
       <Routes>
-        <Route
-          path='/login'
-          element={status === 'authenticated' ? <Navigate to='/guid' replace /> : withRouteFallback(LoginPage)}
-        />
-        <Route element={<ProtectedLayout layout={layout} />}>
+        <Route element={layout}>
           <Route index element={<Navigate to='/guid' replace />} />
           <Route path='/guid' element={withRouteFallback(Guid)} />
           <Route path='/conversation/:id' element={withRouteFallback(Conversation)} />
@@ -110,8 +86,8 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/test/components' element={withRouteFallback(ComponentsShowcase)} />
           <Route path='/scheduled' element={withRouteFallback(ScheduledTasksPage)} />
           <Route path='/scheduled/:job_id' element={withRouteFallback(TaskDetailPage)} />
+          <Route path='*' element={<Navigate to='/guid' replace />} />
         </Route>
-        <Route path='*' element={<Navigate to={status === 'authenticated' ? '/guid' : '/login'} replace />} />
       </Routes>
     </HashRouter>
   );

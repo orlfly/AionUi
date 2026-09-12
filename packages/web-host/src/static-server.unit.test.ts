@@ -88,32 +88,6 @@ describe('static-server', () => {
     expect(json.path).toBe('/api/anything');
   });
 
-  it('/login reverse-proxies to backend (no local handler)', async () => {
-    const backend = await startMockBackend((req, res) => {
-      if (req.url === '/login' && req.method === 'POST') {
-        res.writeHead(200, {
-          'content-type': 'application/json',
-          'set-cookie': 'aionui-session=backend-token; Path=/; HttpOnly',
-        });
-        res.end(JSON.stringify({ success: true, proxied: true }));
-        return;
-      }
-      res.writeHead(404).end();
-    });
-    stopBackend = backend.close;
-    handle = await startStaticServer({ staticDir, backendPort: backend.port, port: 0 });
-
-    const r = await fetch(`${handle.localUrl}/login`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: 'anything' }),
-    });
-    expect(r.status).toBe(200);
-    expect(r.headers.get('set-cookie')).toMatch(/aionui-session=backend-token/);
-    const json = (await r.json()) as { proxied: boolean };
-    expect(json.proxied).toBe(true);
-  });
-
   it('/api/auth/user reverse-proxies to backend (no local handler)', async () => {
     const backend = await startMockBackend((req, res) => {
       if (req.url === '/api/auth/user' && req.method === 'GET') {
@@ -130,26 +104,6 @@ describe('static-server', () => {
     expect(r.status).toBe(200);
     const json = (await r.json()) as { user: { username: string } };
     expect(json.user.username).toBe('from-backend');
-  });
-
-  it('/logout reverse-proxies to backend (no local handler)', async () => {
-    const backend = await startMockBackend((req, res) => {
-      if (req.url === '/logout' && req.method === 'POST') {
-        res.writeHead(200, {
-          'content-type': 'application/json',
-          'set-cookie': 'aionui-session=; Path=/; Max-Age=0',
-        });
-        res.end(JSON.stringify({ success: true, proxied: true }));
-        return;
-      }
-      res.writeHead(404).end();
-    });
-    stopBackend = backend.close;
-    handle = await startStaticServer({ staticDir, backendPort: backend.port, port: 0 });
-
-    const r = await fetch(`${handle.localUrl}/logout`, { method: 'POST' });
-    expect(r.status).toBe(200);
-    expect(r.headers.get('set-cookie')).toMatch(/Max-Age=0/);
   });
 
   it('/api proxy returns 502 when backend unreachable', async () => {
