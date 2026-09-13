@@ -2064,6 +2064,7 @@ export type I18nKey =
   | 'settings.kaneoImport'
   | 'settings.kaneoImportDescription'
   | 'settings.kaneoRetryRole'
+  | 'settings.kaneoRoleLocked'
   | 'settings.kaneoSkillsOverview'
   | 'settings.kaneoSync'
   | 'settings.kaneoSyncFailed'
