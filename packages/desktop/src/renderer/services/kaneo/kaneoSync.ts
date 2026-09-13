@@ -299,17 +299,7 @@ export async function syncKaneoAssistants(
 
       const existingAssistant = findKaneoAssistant(existing, role);
       const rolePrompt = buildClaimPrompt(role, baseUrl);
-
-      if (existingAssistant) {
-        await ipcBridge.assistants.update.invoke({
-          id: existingAssistant.id,
-          description,
-          custom_skill_names: enabledSkills,
-          recommended_prompts: [rolePrompt],
-        });
-        await writeAssistantRule(existingAssistant.id, agentsMd);
-        results.push({ role, status: 'updated' });
-      } else {
+      const createAssistant = async () => {
         const created = await ipcBridge.assistants.create.invoke({
           name: kaneoAssistantName(role),
           description,
@@ -318,6 +308,33 @@ export async function syncKaneoAssistants(
           prompts: [rolePrompt],
         });
         await writeAssistantRule(created.id, agentsMd);
+        return created;
+      };
+
+      if (existingAssistant) {
+        try {
+          await ipcBridge.assistants.update.invoke({
+            id: existingAssistant.id,
+            description,
+            custom_skill_names: enabledSkills,
+            recommended_prompts: [rolePrompt],
+          });
+          await writeAssistantRule(existingAssistant.id, agentsMd);
+          results.push({ role, status: 'updated' });
+        } catch (updateError) {
+          // The assistant was found in the snapshot but no longer exists on the
+          // backend (e.g. deleted elsewhere). Fall back to creating it so a
+          // stale snapshot can't strand a role with neither update nor create.
+          const message = updateError instanceof Error ? updateError.message : String(updateError);
+          if (/not found|NOT_FOUND/i.test(message)) {
+            await createAssistant();
+            results.push({ role, status: 'created' });
+          } else {
+            throw updateError;
+          }
+        }
+      } else {
+        await createAssistant();
         results.push({ role, status: 'created' });
       }
     } catch (error) {

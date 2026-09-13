@@ -236,4 +236,35 @@ describe('syncKaneoAssistants', () => {
       expect(JSON.stringify(c)).not.toContain('super-secret-key');
     }
   });
+
+  it('falls back to creating an assistant when a stale snapshot update returns NOT_FOUND', async () => {
+    stubFetch();
+    const common = await import('@/common');
+    (common.ipcBridge.assistants.update.invoke as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("assistant 'gone' not found")
+    );
+
+    const existing = [mkAssistant('gone', 'Kaneo · coding')];
+    const result = await syncKaneoAssistants('http://kaneo', 'key', ['coding'], existing);
+
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]).toEqual({ role: 'coding', status: 'created' });
+    // Failing update fell back to create (no duplicate, no stranded role).
+    expect(calls.created).toHaveLength(1);
+    expect(calls.created[0]).toMatchObject({ name: 'Kaneo · coding' });
+  });
+
+  it('does not fall back to create when update fails for a non-404 reason', async () => {
+    stubFetch();
+    const common = await import('@/common');
+    (common.ipcBridge.assistants.update.invoke as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('backend exploded')
+    );
+
+    const existing = [mkAssistant('a1', 'Kaneo · coding')];
+    const result = await syncKaneoAssistants('http://kaneo', 'key', ['coding'], existing);
+
+    expect(result.results[0]).toMatchObject({ role: 'coding', status: 'failed' });
+    expect(calls.created).toHaveLength(0);
+  });
 });
