@@ -13,12 +13,7 @@
 import { Alert, Button, Checkbox, Input, Message, Modal, Tag } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  KANEO_AGENT_ROLES,
-  KaneoConnectionError,
-  fetchKaneoTemplates,
-  type KaneoTemplates,
-} from '@/renderer/services/kaneo/kaneoClient';
+import { KaneoConnectionError, fetchKaneoTemplates, type KaneoTemplates } from '@/renderer/services/kaneo/kaneoClient';
 import { syncKaneoAssistants } from '@/renderer/services/kaneo/kaneoSync';
 import { useAssistantList } from '@/renderer/hooks/assistant';
 import { configService } from '@/common/config/configService';
@@ -60,18 +55,16 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
     try {
       const fetched = await fetchKaneoTemplates(baseUrl, apiKey);
       setTemplates(fetched);
-      // A role-scoped API key (metadata.agentRole) is only authorized for that
-      // one role: default the selection to it and remember it so the Guide
-      // dialog stays scoped to that role too.
+      // Every Kaneo API key is bound to exactly one agent role: the sync is
+      // locked to that role (the key cannot act as other roles). Persist it so
+      // the Guide dialog stays scoped to the same role.
       if (fetched.agentRole) {
         setSelectedRoles(fetched.roles.map((r) => r.name).filter((name) => name === fetched.agentRole));
         void configService.set('kaneo.activeRole', fetched.agentRole).catch(() => {});
       } else {
-        setSelectedRoles(
-          fetched.roles.map((r) => r.name).filter((name) => (KANEO_AGENT_ROLES as readonly string[]).includes(name))
-        );
-        // A non-scoped key can import any role; drop any stale role-bound
-        // scope so the Guide reverts to its normal (unfiltered) behavior.
+        // Defensive fallback (should not happen — Kaneo keys always carry a
+        // role): fall back to all roles and clear any stale role-bound scope.
+        setSelectedRoles(fetched.roles.map((r) => r.name));
         void configService.remove('kaneo.activeRole').catch(() => {});
       }
     } catch (error) {
