@@ -7,10 +7,12 @@
 // KaneoImportModal — "Import from Kaneo" flow for the assistants page.
 //
 // Step 1: enter base URL + API key, connect (fetches role/skill templates).
-// Step 2: pick roles, run sync. The API key lives only in component state and
-// is never written into any assistant field or persisted storage.
+// Step 2: review the bound role and run sync. Every Kaneo API key is bound to
+// exactly one agent role, so the modal shows only that role. The API key lives
+// only in component state and is never written into any assistant field or
+// persisted storage.
 
-import { Alert, Button, Checkbox, Input, Message, Modal, Tag } from '@arco-design/web-react';
+import { Alert, Button, Input, Message, Modal, Tag } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KaneoConnectionError, fetchKaneoTemplates, type KaneoTemplates } from '@/renderer/services/kaneo/kaneoClient';
@@ -56,15 +58,15 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
       const fetched = await fetchKaneoTemplates(baseUrl, apiKey);
       setTemplates(fetched);
       // Every Kaneo API key is bound to exactly one agent role: the sync is
-      // locked to that role (the key cannot act as other roles). Persist it so
-      // the Guide dialog stays scoped to the same role.
+      // locked to that role (the key cannot act as other roles), and the modal
+      // shows only that role. Persist it so the Guide dialog stays scoped to
+      // the same role. Without a bound role there is nothing to sync — the
+      // modal disables the action (no role picker is shown).
       if (fetched.agentRole) {
         setSelectedRoles(fetched.roles.map((r) => r.name).filter((name) => name === fetched.agentRole));
         void configService.set('kaneo.activeRole', fetched.agentRole).catch(() => {});
       } else {
-        // Defensive fallback (should not happen — Kaneo keys always carry a
-        // role): fall back to all roles and clear any stale role-bound scope.
-        setSelectedRoles(fetched.roles.map((r) => r.name));
+        setSelectedRoles([]);
         void configService.remove('kaneo.activeRole').catch(() => {});
       }
     } catch (error) {
@@ -144,27 +146,12 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
             {templates.agentRole ? (
               <Alert
                 type='info'
-                content={t('settings.kaneoRoleLocked', { role: templates.agentRole })}
+                content={t('settings.kaneoRoleSelected', { role: templates.agentRole })}
                 style={{ marginBottom: 0 }}
               />
-            ) : null}
-            <Checkbox.Group
-              value={selectedRoles}
-              onChange={(values: string[]) => {
-                // A role-scoped API key is only authorized for its bound role:
-                // ignore attempts to change the selection to other roles.
-                if (!templates?.agentRole) setSelectedRoles(values);
-              }}
-            >
-              <div className='flex flex-col gap-6px'>
-                {templates.roles.map((role) => (
-                  <Checkbox key={role.name} value={role.name} disabled={syncing || Boolean(templates.agentRole)}>
-                    <span className='text-13px'>{role.name}</span>
-                    <span className='ml-6px text-12px text-t-tertiary'>{role.description}</span>
-                  </Checkbox>
-                ))}
-              </div>
-            </Checkbox.Group>
+            ) : (
+              <Alert type='warning' content={t('settings.kaneoRoleMissing')} style={{ marginBottom: 0 }} />
+            )}
             <div>
               <Tag size='small' color='arcoblue' bordered={false}>
                 {t('settings.kaneoSkillsOverview', { count: skillCount })}

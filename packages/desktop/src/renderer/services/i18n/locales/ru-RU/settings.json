@@ -1444,6 +1444,7 @@
   "kaneoSyncPartial": "Синхронизация завершена, но часть ролей завершилась ошибкой",
   "kaneoSyncFailed": "Синхронизация не удалась",
   "kaneoSkillsOverview": "Доступно навыков: {count}",
-  "kaneoRoleLocked": "Этот API-ключ действителен только для роли {role}. Будет импортирован только ассистент этой роли.",
+  "kaneoRoleSelected": "Этот ключ импортирует роль {role}.",
+  "kaneoRoleMissing": "У этого ключа нет роли.",
   "kaneoRetryRole": "Повторить"
 }

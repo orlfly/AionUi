@@ -1432,6 +1432,7 @@
   "kaneoSyncPartial": "同期が完了しましたが、一部のロールに失敗しました",
   "kaneoSyncFailed": "同期に失敗しました",
   "kaneoSkillsOverview": "{count} 個のスキルが利用可能",
-  "kaneoRoleLocked": "この API キーは {role} ロールのみに有効です。そのロールのアシスタントだけがインポートされます。",
+  "kaneoRoleSelected": "このキーは {role} ロールをインポートします。",
+  "kaneoRoleMissing": "このキーにはロールが設定されていません。",
   "kaneoRetryRole": "再試行"
 }

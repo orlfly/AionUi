@@ -1433,6 +1433,7 @@
   "kaneoSyncPartial": "Sincronização concluída com falhas",
   "kaneoSyncFailed": "Falha na sincronização",
   "kaneoSkillsOverview": "{count} habilidades disponíveis",
-  "kaneoRoleLocked": "Esta chave de API só é válida para a função {role}. Apenas o assistente dessa função será importado.",
+  "kaneoRoleSelected": "Esta chave importa a função {role}.",
+  "kaneoRoleMissing": "Esta chave não tem uma função associada.",
   "kaneoRetryRole": "Tentar novamente"
 }
