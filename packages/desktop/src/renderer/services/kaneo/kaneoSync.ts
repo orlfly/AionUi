@@ -236,6 +236,16 @@ export async function syncKaneoAssistants(
 
   const results: KaneoSyncRoleResult[] = [];
 
+  // Assistants need an agent backend; default to the first available managed
+  // agent (same order the assistant editor uses).
+  let defaultAgentId: string | undefined;
+  try {
+    const managedAgents = await ipcBridge.acpConversation.getManagedAgents.invoke();
+    defaultAgentId = managedAgents.find((a: { id: string }) => Boolean(a.id))?.id;
+  } catch {
+    defaultAgentId = undefined;
+  }
+
   for (const role of roles) {
     try {
       const agentsMd = config.roles[role];
@@ -265,6 +275,7 @@ export async function syncKaneoAssistants(
         const created = await ipcBridge.assistants.create.invoke({
           name: kaneoAssistantName(role),
           description,
+          agent_id: defaultAgentId,
           custom_skill_names: enabledSkills,
           prompts: [rolePrompt],
         });
