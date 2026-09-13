@@ -148,10 +148,24 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
         {templates && (
           <div className='flex flex-col gap-8px'>
             <div className='text-13px text-t-primary'>{t('settings.kaneoConnected')}</div>
-            <Checkbox.Group value={selectedRoles} onChange={(values: string[]) => setSelectedRoles(values)}>
+            {templates.agentRole ? (
+              <Alert
+                type='info'
+                content={t('settings.kaneoRoleLocked', { role: templates.agentRole })}
+                style={{ marginBottom: 0 }}
+              />
+            ) : null}
+            <Checkbox.Group
+              value={selectedRoles}
+              onChange={(values: string[]) => {
+                // A role-scoped API key is only authorized for its bound role:
+                // ignore attempts to change the selection to other roles.
+                if (!templates?.agentRole) setSelectedRoles(values);
+              }}
+            >
               <div className='flex flex-col gap-6px'>
                 {templates.roles.map((role) => (
-                  <Checkbox key={role.name} value={role.name} disabled={syncing}>
+                  <Checkbox key={role.name} value={role.name} disabled={syncing || Boolean(templates.agentRole)}>
                     <span className='text-13px'>{role.name}</span>
                     <span className='ml-6px text-12px text-t-tertiary'>{role.description}</span>
                   </Checkbox>

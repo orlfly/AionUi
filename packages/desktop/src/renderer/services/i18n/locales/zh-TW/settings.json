@@ -1432,5 +1432,6 @@
   "kaneoSyncPartial": "同步完成，但部分角色失敗",
   "kaneoSyncFailed": "同步失敗",
   "kaneoSkillsOverview": "共 {count} 個技能",
+  "kaneoRoleLocked": "此 API key 僅綁定 {role} 角色，只會匯入該角色的 Assistant。",
   "kaneoRetryRole": "重試"
 }

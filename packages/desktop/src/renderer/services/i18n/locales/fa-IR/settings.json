@@ -1430,5 +1430,6 @@
   "kaneoSyncPartial": "همگام‌سازی با خطا همراه بود",
   "kaneoSyncFailed": "همگام‌سازی ناموفق بود",
   "kaneoSkillsOverview": "{count} مهارت موجود است",
+  "kaneoRoleLocked": "این کلید API فقط برای نقش {role} مجاز است. فقط دستیارِ همان نقش وارد می‌شود.",
   "kaneoRetryRole": "تلاش مجدد"
 }

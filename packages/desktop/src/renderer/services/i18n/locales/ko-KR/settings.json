@@ -1432,5 +1432,6 @@
   "kaneoSyncPartial": "동기화가 완료되었지만 일부 역할이 실패했습니다",
   "kaneoSyncFailed": "동기화 실패",
   "kaneoSkillsOverview": "{count}개 스킬 사용 가능",
+  "kaneoRoleLocked": "이 API 키는 {role} 역할만 지원합니다. 해당 역할의 어시스턴트만 가져옵니다.",
   "kaneoRetryRole": "재시도"
 }

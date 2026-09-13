@@ -1430,5 +1430,6 @@
   "kaneoSyncPartial": "Sync finished with failures",
   "kaneoSyncFailed": "Sync failed",
   "kaneoSkillsOverview": "{count} skills available",
+  "kaneoRoleLocked": "This API key is scoped to the {role} role only. Only that role's assistant will be imported.",
   "kaneoRetryRole": "Retry"
 }

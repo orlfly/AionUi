@@ -1430,5 +1430,6 @@
   "kaneoSyncPartial": "Synchronisation terminée avec des échecs",
   "kaneoSyncFailed": "Échec de la synchronisation",
   "kaneoSkillsOverview": "{count} compétences disponibles",
+  "kaneoRoleLocked": "Cette clé API est limitée au rôle {role}. Seul l'assistant de ce rôle sera importé.",
   "kaneoRetryRole": "Réessayer"
 }
