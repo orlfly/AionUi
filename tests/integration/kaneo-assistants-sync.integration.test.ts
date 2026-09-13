@@ -52,8 +52,8 @@ try {
 describe.skipIf(!kaneoAvailable)('live Kaneo templates', () => {
   it('exposes the 7 agent roles', async () => {
     const templates = await fetchKaneoTemplates(KANEO_URL, KANEO_KEY);
-    expect(templates.roles.map((r) => r.name).sort()).toEqual(
-      ['architecture-design', 'code-review', 'coding', 'devops', 'product-design', 'testing', 'ui-design'].sort()
+    expect(templates.roles.map((r) => r.name).toSorted()).toEqual(
+      ['architecture-design', 'code-review', 'coding', 'devops', 'product-design', 'testing', 'ui-design'].toSorted()
     );
   });
 });
@@ -124,8 +124,8 @@ describe.skipIf(!kaneoAvailable || !AIONUI_URL)('full sync round trip (5.1/5.2)'
     expect(failed).toEqual([]);
 
     const after = await kaneoAssistants();
-    const names = after.map((a) => a['name']).sort();
-    expect(names).toEqual(roles.map((r) => `Kaneo · ${r}`).sort());
+    const names = after.map((a) => a['name']).toSorted();
+    expect(names).toEqual(roles.map((r) => `Kaneo · ${r}`).toSorted());
 
     // Every role must have at least the universal kaneo-claim-task skill
     // enabled, and only kaneo- prefixed custom skills.

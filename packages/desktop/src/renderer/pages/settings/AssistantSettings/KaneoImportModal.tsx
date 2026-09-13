@@ -21,6 +21,7 @@ import {
 } from '@/renderer/services/kaneo/kaneoClient';
 import { syncKaneoAssistants } from '@/renderer/services/kaneo/kaneoSync';
 import { useAssistantList } from '@/renderer/hooks/assistant';
+import { configService } from '@/common/config/configService';
 
 type KaneoImportModalProps = {
   visible: boolean;
@@ -59,9 +60,20 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
     try {
       const fetched = await fetchKaneoTemplates(baseUrl, apiKey);
       setTemplates(fetched);
-      setSelectedRoles(
-        fetched.roles.map((r) => r.name).filter((name) => (KANEO_AGENT_ROLES as readonly string[]).includes(name))
-      );
+      // A role-scoped API key (metadata.agentRole) is only authorized for that
+      // one role: default the selection to it and remember it so the Guide
+      // dialog stays scoped to that role too.
+      if (fetched.agentRole) {
+        setSelectedRoles(fetched.roles.map((r) => r.name).filter((name) => name === fetched.agentRole));
+        void configService.set('kaneo.activeRole', fetched.agentRole).catch(() => {});
+      } else {
+        setSelectedRoles(
+          fetched.roles.map((r) => r.name).filter((name) => (KANEO_AGENT_ROLES as readonly string[]).includes(name))
+        );
+        // A non-scoped key can import any role; drop any stale role-bound
+        // scope so the Guide reverts to its normal (unfiltered) behavior.
+        void configService.remove('kaneo.activeRole').catch(() => {});
+      }
     } catch (error) {
       const messageText =
         error instanceof KaneoConnectionError

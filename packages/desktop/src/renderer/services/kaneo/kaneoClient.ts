@@ -39,6 +39,12 @@ export type KaneoSkillTemplate = {
 export type KaneoTemplates = {
   roles: KaneoRoleTemplate[];
   skills: KaneoSkillTemplate[];
+  /**
+   * The agent role the caller's API key is bound to (`metadata.agentRole`),
+   * when the Kaneo instance reports it. Role-scoped keys should only ever
+   * import / surface this one role.
+   */
+  agentRole?: string | null;
 };
 
 export type KaneoConfigPackage = {
@@ -106,6 +112,10 @@ export async function fetchKaneoTemplates(baseUrl: string, apiKey: string): Prom
   return {
     roles: roles as KaneoRoleTemplate[],
     skills: skills as KaneoSkillTemplate[],
+    agentRole:
+      typeof (data as { agentRole?: unknown }).agentRole === 'string'
+        ? (data as { agentRole: string }).agentRole
+        : undefined,
   };
 }
 

@@ -73,6 +73,28 @@ export function findKaneoAssistant(assistants: Assistant[], role: string): Assis
 }
 
 /**
+ * Filter the assistant list for a role-scoped Kaneo key.
+ *
+ * When `activeKaneoRole` is set (the role bound to the API key that was used to
+ * import agent config), hide every other `Kaneo · <role>` assistant so the
+ * Guide only surfaces the single role the key is authorized for. Non-Kaneo
+ * assistants are unaffected, and if the bound role's assistant does not exist
+ * yet we fall back to the full list rather than hiding everything.
+ */
+export function filterAssistantsForActiveKaneoRole<T extends { name: string }>(
+  assistants: T[],
+  activeKaneoRole?: string
+): T[] {
+  if (!activeKaneoRole) return assistants;
+  const targetName = kaneoAssistantName(activeKaneoRole);
+  const hasTarget = assistants.some((assistant) => assistant.name === targetName);
+  if (!hasTarget) return assistants;
+  return assistants.filter(
+    (assistant) => !assistant.name.startsWith(KANEO_ASSISTANT_NAME_PREFIX) || assistant.name === targetName
+  );
+}
+
+/**
  * Import a Kaneo skill as `kaneo-<skill>` into the AionUi user skills root.
  *
  * Builds an in-memory zip containing `kaneo-<skill>/SKILL.md`, uploads it via
