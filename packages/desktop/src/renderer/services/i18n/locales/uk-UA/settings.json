@@ -1429,5 +1429,21 @@
   "crossSessionMessageDesc": "Дозволяє агентам надсилати повідомлення до ваших інших розмов. Вимкнення також відключає згадку @@ у полі введення.",
   "crossSessionMessageDisabledBanner": "Повідомлення між розмовами вимкнено, згадка @@ недоступна.",
   "crossSessionMessageResume": "Увімкнути знову",
-  "crossSessionMessageUpdateFailed": "Не вдалося оновити налаштування повідомлень між розмовами"
+  "crossSessionMessageUpdateFailed": "Не вдалося оновити налаштування повідомлень між розмовами",
+  "kaneoImport": "Імпорт з Kaneo",
+  "kaneoImportDescription": "Підключіться до екземпляра Kaneo та створіть по асистенту на кожну роль агента — із готовими правилами та навичками.",
+  "kaneoBaseUrl": "Базова URL-адреса Kaneo",
+  "kaneoBaseUrlPlaceholder": "напр. http://localhost:1337",
+  "kaneoApiKey": "API-ключ",
+  "kaneoApiKeyPlaceholder": "API-ключ Kaneo (лише в памʼяті)",
+  "kaneoConnect": "Підключитися",
+  "kaneoConnected": "Підключено. Виберіть ролі для імпорту:",
+  "kaneoConnectionFailed": "Не вдалося підключитися",
+  "kaneoSync": "Синхронізувати асистентів",
+  "kaneoSyncing": "Синхронізація…",
+  "kaneoSyncSuccess": "Асистенти Kaneo синхронізовано",
+  "kaneoSyncPartial": "Синхронізацію завершено, але частина ролей зазнала невдачі",
+  "kaneoSyncFailed": "Синхронізація не вдалася",
+  "kaneoSkillsOverview": "Доступно навичок: {count}",
+  "kaneoRetryRole": "Повторити"
 }

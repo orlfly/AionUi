@@ -10,6 +10,7 @@ import MyAssistantsList from './MyAssistantsList';
 import OfficialAssistantsGrid from './OfficialAssistantsGrid';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
+import { Button } from '@arco-design/web-react';
 import { AionSearchInput } from '@/renderer/components/base';
 import SettingsPageHeader from '../../components/SettingsPageHeader';
 import React, { useMemo, useState } from 'react';
@@ -24,6 +25,7 @@ type AssistantHomeTabsProps = {
   onDuplicate: (assistant: AssistantListItem) => void;
   onDelete: (assistant: AssistantListItem) => void;
   onCreate: () => void;
+  onKaneoImport: () => void;
   onToggleEnabled: (assistant: AssistantListItem, checked: boolean) => void;
   onReorderEnabled: (activeId: string, overId: string) => void | Promise<void>;
   onStartChat: (assistant: AssistantListItem) => void;
@@ -44,6 +46,7 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
   onDuplicate,
   onDelete,
   onCreate,
+  onKaneoImport,
   onToggleEnabled,
   onReorderEnabled,
   onStartChat,
@@ -118,6 +121,9 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
                     onChange={setSearchQuery}
                   />
                 )}
+                <Button className='shrink-0' data-testid='btn-kaneo-import' onClick={onKaneoImport}>
+                  {t('settings.kaneoImport', { defaultValue: 'Import from Kaneo' })}
+                </Button>
                 <TalkToButlerButton
                   className='shrink-0'
                   label={t('settings.createAssistant', { defaultValue: 'Create Assistant' })}

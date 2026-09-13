@@ -1416,5 +1416,21 @@
   "crossSessionMessageDesc": "에이전트가 다른 대화로 메시지를 보낼 수 있게 합니다. 끄면 입력창의 @@ 대화 멘션도 비활성화됩니다.",
   "crossSessionMessageDisabledBanner": "대화 간 메시지가 꺼져 있어 입력창의 @@ 대화 멘션을 사용할 수 없습니다.",
   "crossSessionMessageResume": "다시 켜기",
-  "crossSessionMessageUpdateFailed": "대화 간 메시지 설정 업데이트에 실패했습니다"
+  "crossSessionMessageUpdateFailed": "대화 간 메시지 설정 업데이트에 실패했습니다",
+  "kaneoImport": "Kaneo에서 가져오기",
+  "kaneoImportDescription": "Kaneo 인스턴스에 연결하여 에이전트 역할별로 어시스턴트를 생성합니다. 규칙과 스킬이 미리 로드됩니다.",
+  "kaneoBaseUrl": "Kaneo 기본 URL",
+  "kaneoBaseUrlPlaceholder": "예: http://localhost:1337",
+  "kaneoApiKey": "API 키",
+  "kaneoApiKeyPlaceholder": "Kaneo API 키(메모리에만 보관)",
+  "kaneoConnect": "연결",
+  "kaneoConnected": "연결됨. 가져올 역할을 선택하세요:",
+  "kaneoConnectionFailed": "연결 실패",
+  "kaneoSync": "어시스턴트 동기화",
+  "kaneoSyncing": "동기화 중…",
+  "kaneoSyncSuccess": "Kaneo 어시스턴트 동기화 완료",
+  "kaneoSyncPartial": "동기화가 완료되었지만 일부 역할이 실패했습니다",
+  "kaneoSyncFailed": "동기화 실패",
+  "kaneoSkillsOverview": "{count}개 스킬 사용 가능",
+  "kaneoRetryRole": "재시도"
 }

@@ -1414,5 +1414,21 @@
   "crossSessionMessageDesc": "Let agents send messages to your other conversations. Turning this off also disables the @@ conversation mention in the input box.",
   "crossSessionMessageDisabledBanner": "Cross-conversation messages are off, so the @@ conversation mention is unavailable.",
   "crossSessionMessageResume": "Turn back on",
-  "crossSessionMessageUpdateFailed": "Failed to update the cross-conversation message setting"
+  "crossSessionMessageUpdateFailed": "Failed to update the cross-conversation message setting",
+  "kaneoImport": "Import from Kaneo",
+  "kaneoImportDescription": "Connect to a Kaneo instance and create one assistant per agent role, with rules and skills preloaded.",
+  "kaneoBaseUrl": "Kaneo base URL",
+  "kaneoBaseUrlPlaceholder": "e.g. http://localhost:1337",
+  "kaneoApiKey": "API key",
+  "kaneoApiKeyPlaceholder": "Kaneo API key (kept in memory only)",
+  "kaneoConnect": "Connect",
+  "kaneoConnected": "Connected. Select the roles to import:",
+  "kaneoConnectionFailed": "Connection failed",
+  "kaneoSync": "Sync assistants",
+  "kaneoSyncing": "Syncing…",
+  "kaneoSyncSuccess": "Synced Kaneo assistants",
+  "kaneoSyncPartial": "Sync finished with failures",
+  "kaneoSyncFailed": "Sync failed",
+  "kaneoSkillsOverview": "{count} skills available",
+  "kaneoRetryRole": "Retry"
 }

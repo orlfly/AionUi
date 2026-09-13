@@ -1416,5 +1416,21 @@
   "crossSessionMessageDesc": "允許 Agent 向你的其他對話傳送訊息。關閉後，輸入框的 @@ 對話提及與投遞功能會同時停用。",
   "crossSessionMessageDisabledBanner": "跨對話訊息已關閉，輸入框的 @@ 對話提及不可用。",
   "crossSessionMessageResume": "重新開啟",
-  "crossSessionMessageUpdateFailed": "跨對話訊息設定更新失敗"
+  "crossSessionMessageUpdateFailed": "跨對話訊息設定更新失敗",
+  "kaneoImport": "從 Kaneo 匯入",
+  "kaneoImportDescription": "連線 Kaneo 實例，依 agent 角色批次建立 Assistant，自動預載規則與技能。",
+  "kaneoBaseUrl": "Kaneo 位址",
+  "kaneoBaseUrlPlaceholder": "例如 http://localhost:1337",
+  "kaneoApiKey": "API 金鑰",
+  "kaneoApiKeyPlaceholder": "Kaneo API key（僅在記憶體中使用）",
+  "kaneoConnect": "連線",
+  "kaneoConnected": "已連線。選擇要匯入的角色：",
+  "kaneoConnectionFailed": "連線失敗",
+  "kaneoSync": "同步 Assistant",
+  "kaneoSyncing": "同步中…",
+  "kaneoSyncSuccess": "Kaneo Assistant 同步完成",
+  "kaneoSyncPartial": "同步完成，但部分角色失敗",
+  "kaneoSyncFailed": "同步失敗",
+  "kaneoSkillsOverview": "共 {count} 個技能",
+  "kaneoRetryRole": "重試"
 }

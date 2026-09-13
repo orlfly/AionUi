@@ -1414,5 +1414,21 @@
   "crossSessionMessageDesc": "Aracıların diğer sohbetlerinize mesaj göndermesine izin verir. Kapatmak giriş alanındaki @@ sohbet etiketini de devre dışı bırakır.",
   "crossSessionMessageDisabledBanner": "Sohbetler arası mesajlar kapalı, @@ sohbet etiketi kullanılamıyor.",
   "crossSessionMessageResume": "Yeniden aç",
-  "crossSessionMessageUpdateFailed": "Sohbetler arası mesaj ayarı güncellenemedi"
+  "crossSessionMessageUpdateFailed": "Sohbetler arası mesaj ayarı güncellenemedi",
+  "kaneoImport": "Kaneo'dan içe aktar",
+  "kaneoImportDescription": "Bir Kaneo örneğine bağlanın ve her ajan rolü için bir asistan oluşturun; kurallar ve beceriler önceden yüklenir.",
+  "kaneoBaseUrl": "Kaneo temel URL",
+  "kaneoBaseUrlPlaceholder": "örn. http://localhost:1337",
+  "kaneoApiKey": "API anahtarı",
+  "kaneoApiKeyPlaceholder": "Kaneo API anahtarı (yalnızca bellekte tutulur)",
+  "kaneoConnect": "Bağlan",
+  "kaneoConnected": "Bağlandı. İçe aktarılacak rolleri seçin:",
+  "kaneoConnectionFailed": "Bağlantı başarısız",
+  "kaneoSync": "Asistanları eşitle",
+  "kaneoSyncing": "Eşitleniyor…",
+  "kaneoSyncSuccess": "Kaneo asistanları eşitlendi",
+  "kaneoSyncPartial": "Eşitleme tamamlandı, ancak bazı roller başarısız oldu",
+  "kaneoSyncFailed": "Eşitleme başarısız",
+  "kaneoSkillsOverview": "{count} beceri kullanılabilir",
+  "kaneoRetryRole": "Yeniden dene"
 }

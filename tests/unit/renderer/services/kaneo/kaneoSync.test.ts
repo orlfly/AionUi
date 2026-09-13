@@ -72,7 +72,7 @@ describe('skillsForRoleFromTemplates', () => {
     ],
   };
   it('returns matching plus universal skills', () => {
-    expect(skillsForRoleFromTemplates(templates, 'coding').sort()).toEqual(['a', 'c']);
+    expect(skillsForRoleFromTemplates(templates, 'coding').toSorted()).toEqual(['a', 'c']);
   });
 });
 

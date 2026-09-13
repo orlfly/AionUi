@@ -1414,5 +1414,21 @@
   "crossSessionMessageDesc": "Permet aux agents d'envoyer des messages à vos autres conversations. La désactivation coupe aussi la mention @@ dans la zone de saisie.",
   "crossSessionMessageDisabledBanner": "Les messages entre conversations sont désactivés, la mention @@ est indisponible.",
   "crossSessionMessageResume": "Réactiver",
-  "crossSessionMessageUpdateFailed": "Échec de la mise à jour du réglage des messages entre conversations"
+  "crossSessionMessageUpdateFailed": "Échec de la mise à jour du réglage des messages entre conversations",
+  "kaneoImport": "Importer depuis Kaneo",
+  "kaneoImportDescription": "Connectez-vous à une instance Kaneo et créez un assistant par rôle d'agent, avec règles et compétences préchargées.",
+  "kaneoBaseUrl": "URL de base Kaneo",
+  "kaneoBaseUrlPlaceholder": "p. ex. http://localhost:1337",
+  "kaneoApiKey": "Clé API",
+  "kaneoApiKeyPlaceholder": "Clé API Kaneo (en mémoire uniquement)",
+  "kaneoConnect": "Se connecter",
+  "kaneoConnected": "Connecté. Sélectionnez les rôles à importer :",
+  "kaneoConnectionFailed": "Échec de la connexion",
+  "kaneoSync": "Synchroniser les assistants",
+  "kaneoSyncing": "Synchronisation…",
+  "kaneoSyncSuccess": "Assistants Kaneo synchronisés",
+  "kaneoSyncPartial": "Synchronisation terminée avec des échecs",
+  "kaneoSyncFailed": "Échec de la synchronisation",
+  "kaneoSkillsOverview": "{count} compétences disponibles",
+  "kaneoRetryRole": "Réessayer"
 }

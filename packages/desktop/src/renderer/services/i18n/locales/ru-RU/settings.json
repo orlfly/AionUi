@@ -1428,5 +1428,21 @@
   "crossSessionMessageDesc": "Разрешить агентам отправлять сообщения в ваши другие беседы. При отключении также отключается упоминание @@ в поле ввода.",
   "crossSessionMessageDisabledBanner": "Сообщения между беседами отключены, упоминание @@ недоступно.",
   "crossSessionMessageResume": "Включить снова",
-  "crossSessionMessageUpdateFailed": "Не удалось обновить настройку сообщений между беседами"
+  "crossSessionMessageUpdateFailed": "Не удалось обновить настройку сообщений между беседами",
+  "kaneoImport": "Импорт из Kaneo",
+  "kaneoImportDescription": "Подключитесь к экземпляру Kaneo и создайте по ассистенту на каждую роль агента — с готовыми правилами и навыками.",
+  "kaneoBaseUrl": "Базовый URL Kaneo",
+  "kaneoBaseUrlPlaceholder": "напр. http://localhost:1337",
+  "kaneoApiKey": "API-ключ",
+  "kaneoApiKeyPlaceholder": "API-ключ Kaneo (только в памяти)",
+  "kaneoConnect": "Подключиться",
+  "kaneoConnected": "Подключено. Выберите роли для импорта:",
+  "kaneoConnectionFailed": "Не удалось подключиться",
+  "kaneoSync": "Синхронизировать ассистентов",
+  "kaneoSyncing": "Синхронизация…",
+  "kaneoSyncSuccess": "Ассистенты Kaneo синхронизированы",
+  "kaneoSyncPartial": "Синхронизация завершена, но часть ролей завершилась ошибкой",
+  "kaneoSyncFailed": "Синхронизация не удалась",
+  "kaneoSkillsOverview": "Доступно навыков: {count}",
+  "kaneoRetryRole": "Повторить"
 }
