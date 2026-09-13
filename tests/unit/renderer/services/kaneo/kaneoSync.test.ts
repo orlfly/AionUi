@@ -18,6 +18,7 @@ import {
   findKaneoAssistant,
   kaneoAssistantName,
   kaneoSkillName,
+  rewriteSkillName,
 } from '@renderer/services/kaneo/kaneoSync';
 import type { Assistant } from '@common/types/agent/assistantTypes';
 
@@ -143,5 +144,27 @@ describe('buildSkillZip', () => {
       }
     }
     expect(found).toBe(true);
+  });
+});
+
+// ── kaneoSync: frontmatter name rewrite ─────────────────────────────────────
+
+describe('rewriteSkillName', () => {
+  it('rewrites an existing name field to the kaneo- prefixed name', () => {
+    const md = '---\nname: frontend-design\ndescription: x\nfor_roles: [ui-design]\n---\n\n# body';
+    const out = rewriteSkillName(md, 'kaneo-frontend-design');
+    expect(out).toContain('name: kaneo-frontend-design');
+    expect(out).toContain('for_roles: [ui-design]');
+    expect(out).toContain('# body');
+  });
+
+  it('leaves content without frontmatter untouched', () => {
+    const md = '# no frontmatter\nname: x\n';
+    expect(rewriteSkillName(md, 'kaneo-x')).toBe(md);
+  });
+
+  it('leaves content without a name field untouched', () => {
+    const md = '---\ndescription: only desc\n---\nbody';
+    expect(rewriteSkillName(md, 'kaneo-x')).toBe(md);
   });
 });

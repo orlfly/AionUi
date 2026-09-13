@@ -104,11 +104,27 @@ export async function importKaneoSkill(
   }
 }
 
+/**
+ * Rewrite the `name:` field in a SKILL.md frontmatter to `skillDir`.
+ * The skills import endpoint derives the installed skill name from the
+ * frontmatter `name:` when present (falling back to the zip entry folder), so
+ * Kaneo skills carrying their own name would otherwise be installed without
+ * the `kaneo-` prefix, breaking the naming convention and role upsert matching.
+ */
+export function rewriteSkillName(skillMdContent: string, skillName: string): string {
+  const frontmatter = skillMdContent.match(/^---\r?\n([\s\S]*?)\r?\n(-{3,}\r?\n?)/);
+  if (!frontmatter) return skillMdContent;
+  const rewritten = frontmatter[1].replace(/^(\s*name:\s*).*$/m, `$1${skillName}`);
+  if (rewritten === frontmatter[1]) return skillMdContent;
+  return skillMdContent.replace(frontmatter[0], `---\n${rewritten}\n---\n`);
+}
+
 /** Build a zip blob with a single `<skillDir>/SKILL.md` entry (stored, no compression). */
 export function buildSkillZip(skillDir: string, skillMdContent: string): Blob {
+  const content = rewriteSkillName(skillMdContent, skillDir);
   const encoder = new TextEncoder();
   const nameBytes = encoder.encode(`${skillDir}/SKILL.md`);
-  const dataBytes = encoder.encode(skillMdContent);
+  const dataBytes = encoder.encode(content);
   const crc32 = crc32Of(dataBytes);
 
   const u16 = (v: number): Uint8Array => new Uint8Array([v & 0xff, (v >>> 8) & 0xff]);
