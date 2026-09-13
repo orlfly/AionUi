@@ -1425,15 +1425,15 @@
   "kaneoApiKey": "Chave de API",
   "kaneoApiKeyPlaceholder": "Chave de API do Kaneo (mantida apenas em memória)",
   "kaneoConnect": "Conectar",
-  "kaneoConnected": "Conectado. Selecione os papéis a importar:",
+  "kaneoConnected": "Conectado.",
   "kaneoConnectionFailed": "Falha na conexão",
   "kaneoSync": "Sincronizar assistentes",
   "kaneoSyncing": "Sincronizando…",
   "kaneoSyncSuccess": "Assistentes do Kaneo sincronizados",
   "kaneoSyncPartial": "Sincronização concluída com falhas",
   "kaneoSyncFailed": "Falha na sincronização",
-  "kaneoSkillsOverview": "{count} habilidades disponíveis",
-  "kaneoRoleSelected": "Esta chave importa a função {role}.",
+  "kaneoSkillsOverview": "{{count}} habilidades disponíveis",
+  "kaneoRoleSelected": "Esta chave importa a função {{role}}.",
   "kaneoRoleMissing": "Esta chave não tem uma função associada.",
   "kaneoRetryRole": "Tentar novamente"
 }

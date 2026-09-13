@@ -1424,15 +1424,15 @@
   "kaneoApiKey": "API キー",
   "kaneoApiKeyPlaceholder": "Kaneo API キー（メモリ上のみ使用）",
   "kaneoConnect": "接続",
-  "kaneoConnected": "接続済み。インポートするロールを選択してください：",
+  "kaneoConnected": "接続済み。",
   "kaneoConnectionFailed": "接続に失敗しました",
   "kaneoSync": "アシスタントを同期",
   "kaneoSyncing": "同期中…",
   "kaneoSyncSuccess": "Kaneo アシスタントの同期が完了しました",
   "kaneoSyncPartial": "同期が完了しましたが、一部のロールに失敗しました",
   "kaneoSyncFailed": "同期に失敗しました",
-  "kaneoSkillsOverview": "{count} 個のスキルが利用可能",
-  "kaneoRoleSelected": "このキーは {role} ロールをインポートします。",
+  "kaneoSkillsOverview": "{{count}} 個のスキルが利用可能",
+  "kaneoRoleSelected": "このキーは {{role}} ロールをインポートします。",
   "kaneoRoleMissing": "このキーにはロールが設定されていません。",
   "kaneoRetryRole": "再試行"
 }

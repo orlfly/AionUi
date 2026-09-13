@@ -1422,15 +1422,15 @@
   "kaneoApiKey": "API key",
   "kaneoApiKeyPlaceholder": "Kaneo API key (kept in memory only)",
   "kaneoConnect": "Connect",
-  "kaneoConnected": "Connected. Select the roles to import:",
+  "kaneoConnected": "Connected.",
   "kaneoConnectionFailed": "Connection failed",
   "kaneoSync": "Sync assistants",
   "kaneoSyncing": "Syncing…",
   "kaneoSyncSuccess": "Synced Kaneo assistants",
   "kaneoSyncPartial": "Sync finished with failures",
   "kaneoSyncFailed": "Sync failed",
-  "kaneoSkillsOverview": "{count} skills available",
-  "kaneoRoleSelected": "This key imports the {role} role.",
+  "kaneoSkillsOverview": "{{count}} skills available",
+  "kaneoRoleSelected": "This key imports the {{role}} role.",
   "kaneoRoleMissing": "This key has no bound role.",
   "kaneoRetryRole": "Retry"
 }

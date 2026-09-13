@@ -1436,15 +1436,15 @@
   "kaneoApiKey": "API-ключ",
   "kaneoApiKeyPlaceholder": "API-ключ Kaneo (только в памяти)",
   "kaneoConnect": "Подключиться",
-  "kaneoConnected": "Подключено. Выберите роли для импорта:",
+  "kaneoConnected": "Подключено.",
   "kaneoConnectionFailed": "Не удалось подключиться",
   "kaneoSync": "Синхронизировать ассистентов",
   "kaneoSyncing": "Синхронизация…",
   "kaneoSyncSuccess": "Ассистенты Kaneo синхронизированы",
   "kaneoSyncPartial": "Синхронизация завершена, но часть ролей завершилась ошибкой",
   "kaneoSyncFailed": "Синхронизация не удалась",
-  "kaneoSkillsOverview": "Доступно навыков: {count}",
-  "kaneoRoleSelected": "Этот ключ импортирует роль {role}.",
+  "kaneoSkillsOverview": "Доступно навыков: {{count}}",
+  "kaneoRoleSelected": "Этот ключ импортирует роль {{role}}.",
   "kaneoRoleMissing": "У этого ключа нет роли.",
   "kaneoRetryRole": "Повторить"
 }

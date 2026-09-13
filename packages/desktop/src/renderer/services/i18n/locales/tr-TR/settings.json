@@ -1422,15 +1422,15 @@
   "kaneoApiKey": "API anahtarı",
   "kaneoApiKeyPlaceholder": "Kaneo API anahtarı (yalnızca bellekte tutulur)",
   "kaneoConnect": "Bağlan",
-  "kaneoConnected": "Bağlandı. İçe aktarılacak rolleri seçin:",
+  "kaneoConnected": "Bağlandı.",
   "kaneoConnectionFailed": "Bağlantı başarısız",
   "kaneoSync": "Asistanları eşitle",
   "kaneoSyncing": "Eşitleniyor…",
   "kaneoSyncSuccess": "Kaneo asistanları eşitlendi",
   "kaneoSyncPartial": "Eşitleme tamamlandı, ancak bazı roller başarısız oldu",
   "kaneoSyncFailed": "Eşitleme başarısız",
-  "kaneoSkillsOverview": "{count} beceri kullanılabilir",
-  "kaneoRoleSelected": "Bu anahtar {role} rolünü içe aktarır.",
+  "kaneoSkillsOverview": "{{count}} beceri kullanılabilir",
+  "kaneoRoleSelected": "Bu anahtar {{role}} rolünü içe aktarır.",
   "kaneoRoleMissing": "Bu anahtarın bağlı bir rolü yok.",
   "kaneoRetryRole": "Yeniden dene"
 }

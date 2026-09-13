@@ -1437,15 +1437,15 @@
   "kaneoApiKey": "API-ключ",
   "kaneoApiKeyPlaceholder": "API-ключ Kaneo (лише в памʼяті)",
   "kaneoConnect": "Підключитися",
-  "kaneoConnected": "Підключено. Виберіть ролі для імпорту:",
+  "kaneoConnected": "Підключено.",
   "kaneoConnectionFailed": "Не вдалося підключитися",
   "kaneoSync": "Синхронізувати асистентів",
   "kaneoSyncing": "Синхронізація…",
   "kaneoSyncSuccess": "Асистенти Kaneo синхронізовано",
   "kaneoSyncPartial": "Синхронізацію завершено, але частина ролей зазнала невдачі",
   "kaneoSyncFailed": "Синхронізація не вдалася",
-  "kaneoSkillsOverview": "Доступно навичок: {count}",
-  "kaneoRoleSelected": "Цей ключ імпортує роль {role}.",
+  "kaneoSkillsOverview": "Доступно навичок: {{count}}",
+  "kaneoRoleSelected": "Цей ключ імпортує роль {{role}}.",
   "kaneoRoleMissing": "Цей ключ не має ролі.",
   "kaneoRetryRole": "Повторити"
 }

@@ -1422,15 +1422,15 @@
   "kaneoApiKey": "کلید API",
   "kaneoApiKeyPlaceholder": "کلید API Kaneo (فقط در حافظه)",
   "kaneoConnect": "اتصال",
-  "kaneoConnected": "متصل شد. نقش‌های موردنظر برای وارد کردن را انتخاب کنید:",
+  "kaneoConnected": "متصل شد.",
   "kaneoConnectionFailed": "اتصال ناموفق بود",
   "kaneoSync": "همگام‌سازی دستیارها",
   "kaneoSyncing": "در حال همگام‌سازی…",
   "kaneoSyncSuccess": "دستیارهای Kaneo همگام شدند",
   "kaneoSyncPartial": "همگام‌سازی با خطا همراه بود",
   "kaneoSyncFailed": "همگام‌سازی ناموفق بود",
-  "kaneoSkillsOverview": "{count} مهارت موجود است",
-  "kaneoRoleSelected": "این کلید نقش {role} را وارد می‌کند.",
+  "kaneoSkillsOverview": "{{count}} مهارت موجود است",
+  "kaneoRoleSelected": "این کلید نقش {{role}} را وارد می‌کند.",
   "kaneoRoleMissing": "این کلید نقشی ندارد.",
   "kaneoRetryRole": "تلاش مجدد"
 }

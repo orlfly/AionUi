@@ -13,9 +13,15 @@
 // persisted storage.
 
 import { Alert, Button, Input, Message, Modal, Tag } from '@arco-design/web-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KaneoConnectionError, fetchKaneoTemplates, type KaneoTemplates } from '@/renderer/services/kaneo/kaneoClient';
+import {
+  KaneoConnectionError,
+  fetchKaneoConfigPackage,
+  fetchKaneoTemplates,
+  skillAppliesToRole,
+  type KaneoTemplates,
+} from '@/renderer/services/kaneo/kaneoClient';
 import { syncKaneoAssistants } from '@/renderer/services/kaneo/kaneoSync';
 import { useAssistantList } from '@/renderer/hooks/assistant';
 import { configService } from '@/common/config/configService';
@@ -34,6 +40,10 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
   const [baseUrl, setBaseUrl] = useState('http://localhost:1337');
   const [apiKey, setApiKey] = useState('');
   const [templates, setTemplates] = useState<KaneoTemplates | null>(null);
+  const [configPackage, setConfigPackage] = useState<{
+    roles: Record<string, string>;
+    skills: Record<string, string>;
+  } | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -45,6 +55,7 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
       // Clear secrets and transient state when the modal closes.
       setApiKey('');
       setTemplates(null);
+      setConfigPackage(null);
       setSelectedRoles([]);
       setConnectError(null);
       setResults(null);
@@ -57,6 +68,15 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
     try {
       const fetched = await fetchKaneoTemplates(baseUrl, apiKey);
       setTemplates(fetched);
+      // Fetch the full config package so the modal can show the role's base
+      // rules (AGENTS.md) for the bound role.
+      let cfg: { roles: Record<string, string>; skills: Record<string, string> } | null = null;
+      try {
+        cfg = await fetchKaneoConfigPackage(baseUrl, apiKey);
+      } catch {
+        cfg = null;
+      }
+      setConfigPackage(cfg);
       // Every Kaneo API key is bound to exactly one agent role: the sync is
       // locked to that role (the key cannot act as other roles), and the modal
       // shows only that role. Persist it so the Guide dialog stays scoped to
@@ -102,7 +122,19 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
     }
   }, [apiKey, assistants, baseUrl, loadAssistants, onSynced, selectedRoles, t, templates]);
 
-  const skillCount = templates?.skills.length ?? 0;
+  // Details for the API-key-bound role: description, applicable skills, and the
+  // base config (AGENTS.md) fetched from the config package. kaneoRoleSelected
+  // already announces the role; this fills in the rich preview below.
+  const boundRole = templates?.agentRole ?? null;
+  const boundRoleTemplate = templates?.roles.find((r) => r.name === boundRole);
+  const boundRoleSkills = useMemo(
+    () =>
+      templates && boundRole
+        ? templates.skills.filter((s) => skillAppliesToRole(s.forRoles, boundRole)).map((s) => s.name)
+        : [],
+    [templates, boundRole]
+  );
+  const boundRoleRules = boundRole && configPackage ? configPackage.roles[boundRole] : undefined;
 
   return (
     <Modal
@@ -141,20 +173,44 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
         {connectError && <Alert type='error' content={connectError} />}
 
         {templates && (
-          <div className='flex flex-col gap-8px'>
+          <div className='flex flex-col gap-10px'>
             <div className='text-13px text-t-primary'>{t('settings.kaneoConnected')}</div>
             {templates.agentRole ? (
-              <Alert
-                type='info'
-                content={t('settings.kaneoRoleSelected', { role: templates.agentRole })}
-                style={{ marginBottom: 0 }}
-              />
+              <>
+                <Alert
+                  type='info'
+                  content={t('settings.kaneoRoleSelected', { role: templates.agentRole })}
+                  style={{ marginBottom: 0 }}
+                />
+                {boundRoleTemplate && (
+                  <div className='flex flex-col gap-4px rounded-8px bg-fill-1 p-10px'>
+                    <div className='flex items-baseline gap-6px'>
+                      <span className='text-13px font-semibold text-t-primary'>{boundRoleTemplate.name}</span>
+                      <span className='text-12px text-t-tertiary'>{boundRoleTemplate.description}</span>
+                    </div>
+                    {boundRoleSkills.length > 0 && (
+                      <div className='flex flex-wrap gap-4px'>
+                        {boundRoleSkills.map((s) => (
+                          <Tag size='small' key={s} bordered={false} color='arcoblue'>
+                            {s}
+                          </Tag>
+                        ))}
+                      </div>
+                    )}
+                    {boundRoleRules && (
+                      <pre className='m-0 max-h-150px overflow-auto whitespace-pre-wrap text-12px text-t-secondary'>
+                        {boundRoleRules}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </>
             ) : (
               <Alert type='warning' content={t('settings.kaneoRoleMissing')} style={{ marginBottom: 0 }} />
             )}
             <div>
               <Tag size='small' color='arcoblue' bordered={false}>
-                {t('settings.kaneoSkillsOverview', { count: skillCount })}
+                {t('settings.kaneoSkillsOverview', { count: boundRoleSkills.length })}
               </Tag>
             </div>
 
