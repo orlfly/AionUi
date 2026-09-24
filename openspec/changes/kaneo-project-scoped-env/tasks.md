@@ -11,19 +11,19 @@ Implementation is split so each group lands independently revertible. Group 1 tr
 
 ## 2. Manifest client and config model (AionUi renderer, fallback-first)
 
-- [ ] 2.1 Add manifest types and `fetchKaneoBootstrap()` in `services/kaneo/` with 404/405 fallback to the templates flow and version tolerance (render known sections, warn on newer major)
-- [ ] 2.2 Replace `kaneo.activeRole` with `kaneo.contexts[]` + `activeContextId` in `configKeys.ts`; add one-time migration from `kaneo.activeRole` to a project-less context (dual-read window during rollout)
-- [ ] 2.3 Generalize `filterAssistantsForActiveKaneoRole` to context-based filtering (hide other roles in the active project, keep other projects' Kaneo assistants and non-Kaneo assistants visible)
-- [ ] 2.4 Unit tests: manifest parsing/fallback, version tolerance, migration, filtering (multi-project scenario)
+- [x] 2.1 Add manifest types and `fetchKaneoBootstrap()` in `services/kaneo/` with 404/405 fallback to the templates flow and version tolerance (render known sections, warn on newer major)
+- [x] 2.2 Replace `kaneo.activeRole` with `kaneo.contexts[]` + `activeContextId` in `configKeys.ts`; add one-time migration from `kaneo.activeRole` to a project-less context (dual-read window during rollout)
+- [x] 2.3 Generalize `filterAssistantsForActiveKaneoRole` to context-based filtering (hide other roles in the active project, keep other projects' Kaneo assistants and non-Kaneo assistants visible)
+- [x] 2.4 Unit tests: manifest parsing/fallback, version tolerance, migration, filtering (multi-project scenario)
 - [ ] 2.5 Run i18n pipeline (`bun run i18n:types`, `node scripts/check-i18n.js`) after adding keys for all new user-facing strings
 
 ## 3. Sync upgrades: naming, rules segment, workspace
 
-- [ ] 3.1 Extend `kaneoSync` for project-bound keys: assistant name `Kaneo · <projectName> · <role>`, upsert keyed by (baseUrl, projectId, role) with rename-on-project-rename (match by projectId from context, not name)
-- [ ] 3.2 Implement `renderProjectEnvironmentSegment(manifest)` (repo/branch guidance with nullable defaultBranch, no-VCS case, status machine, boundaries) and append it to assistant rules on every sync, atomically rewriting the segment
-- [ ] 3.3 Implement workspace allocation `<userData>/kaneo-workspaces/<projectSlug>/<role>/` on sync (recursive create, path recorded in context); no allocation for unbound keys
-- [ ] 3.4 Implement envHash drift detection on reconnect (re-render rules segment, re-clone notice when primary cloneUrl changes, never delete old workspace)
-- [ ] 3.5 Skill import collision handling: identical content idempotent, differing content skip + drift warning in sync results
+- [x] 3.1 Extend `kaneoSync` for project-bound keys: assistant name `Kaneo · <projectName> · <role>`, upsert keyed by (baseUrl, projectId, role) with rename-on-project-rename (match by projectId from context, not name)
+- [x] 3.2 Implement `renderProjectEnvironmentSegment(manifest)` (repo/branch guidance with nullable defaultBranch, no-VCS case, status machine, boundaries) and append it to assistant rules on every sync, atomically rewriting the segment
+- [x] 3.3 Implement workspace allocation `<userData>/kaneo-workspaces/<projectSlug>/<role>/` on sync (recursive create, path recorded in context); no allocation for unbound keys
+- [x] 3.4 Implement envHash drift detection on reconnect (re-render rules segment, re-clone notice when primary cloneUrl changes, never delete old workspace)
+- [x] 3.5 Skill import collision handling: identical content idempotent, differing content skip + drift warning in sync results
 - [ ] 3.6 Adapt KaneoImportModal: bootstrap preview (role, project, repository, skills), drift/expiry notices, active-context switching
 - [ ] 3.7 Unit tests: naming/upsert/rename, segment rendering (all manifest edge cases), workspace paths, drift, collision handling
 - [ ] 3.8 Extend `tests/integration/kaneo-assistants-sync.integration.test.ts` with a bootstrap-mock round trip (rules contain project segment, workspace created, skills filtered)
