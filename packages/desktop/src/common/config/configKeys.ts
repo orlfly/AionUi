@@ -1,4 +1,5 @@
 import type { Theme } from '@/common/theme/types';
+import type { KaneoContext } from '@/renderer/services/kaneo/kaneoContexts';
 
 export type ConfigKeyMap = {
   language: string;
@@ -23,8 +24,14 @@ export type ConfigKeyMap = {
   'theme.userThemes': Theme[];
   'workspace.pasteConfirm': boolean | undefined;
   'guid.lastAssistantId': string | undefined;
-  /** Kaneo role bound to the last imported role-scoped API key (e.g. `coding`). */
+  /** Kaneo role bound to the last imported role-scoped API key (e.g. `coding`).
+   * Legacy: migrated once into `kaneo.contexts` by migrateKaneoContexts; kept
+   * in the type map during the dual-read window, then removed. */
   'kaneo.activeRole': string | undefined;
+  /** Imported Kaneo contexts (project/role bindings, no key material). */
+  'kaneo.contexts': KaneoContext[] | undefined;
+  /** Which Kaneo context is currently active in the Guide. */
+  'kaneo.activeContextId': string | undefined;
   /** User-defined order for the enabled assistant picker surfaces. */
   'assistants.enabledOrder': string[] | undefined;
   'upload.saveToWorkspace': boolean | undefined;

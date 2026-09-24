@@ -20,7 +20,8 @@ import type { SlashCommandItem } from '@/common/chat/slash/types';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCustomAgentsLoader } from './useCustomAgentsLoader';
-import { filterAssistantsForActiveKaneoRole } from '@/renderer/services/kaneo/kaneoSync';
+import { filterAssistantsForKaneoContext } from '@/renderer/services/kaneo/kaneoSync';
+import { getActiveKaneoContext, migrateKaneoContexts } from '@/renderer/services/kaneo/kaneoContexts';
 
 export {
   buildAgentRuntimeModeState,
@@ -129,13 +130,17 @@ export const useGuidAssistantSelection = ({
   const { assistants: allAssistants } = useCustomAgentsLoader();
   const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
 
-  // When Kaneo agent config was imported with a role-scoped API key, the Guide
-  // surface stays scoped to that role: hide every other Kaneo role assistant so
-  // only the role the key is authorized for is offered.
-  const activeKaneoRole = configService.get('kaneo.activeRole');
+  // When a Kaneo context is active (project-bound import), the Guide stays
+  // scoped to that project's bound role: hide the same project's other-role
+  // Kaneo assistants; other projects' Kaneo assistants and non-Kaneo ones stay
+  // visible. Legacy installs are migrated to a context on first Guide mount.
+  useEffect(() => {
+    void migrateKaneoContexts().catch(() => {});
+  }, []);
+  const activeKaneoContext = getActiveKaneoContext();
   const assistants = useMemo(
-    () => filterAssistantsForActiveKaneoRole(allAssistants, activeKaneoRole),
-    [activeKaneoRole, allAssistants]
+    () => filterAssistantsForKaneoContext(allAssistants, activeKaneoContext),
+    [activeKaneoContext, allAssistants]
   );
 
   const setSelectedMode = useCallback(

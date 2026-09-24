@@ -2504,3 +2504,15 @@ export const sidebar = {
     (p) => `/api/sidebar/archived/project/${encodeURIComponent(p.project_id)}`
   ),
 };
+
+// ---------------------------------------------------------------------------
+// Kaneo workspace — routed to /api/fs/kaneo-workspace
+// ---------------------------------------------------------------------------
+
+export const kaneoWorkspace = {
+  // Create (if missing) the backend-managed per-project per-role workspace
+  // directory for Kaneo agents and return its absolute path. The backend
+  // validates the slug/role as single path components and creates
+  // `{managed-root}/kaneo-workspaces/<slug>/<role>/`.
+  ensure: httpPost<string, { project_slug: string; role: string }>('/api/fs/kaneo-workspace'),
+};

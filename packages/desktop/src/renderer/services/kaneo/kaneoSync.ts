@@ -34,12 +34,28 @@ import {
   skillAppliesToRole,
   skillsForRoleFromTemplates,
 } from './kaneoClient';
+import {
+  type KaneoEnvironmentManifest,
+  isManifestVersionNewer,
+  primaryRepository,
+} from './kaneoManifest';
+import {
+  type KaneoContext,
+  contextFromManifest,
+  updateKaneoContext,
+  upsertKaneoContext,
+} from './kaneoContexts';
 
 export const KANEO_ASSISTANT_NAME_PREFIX = 'Kaneo · ';
 export const KANEO_SKILL_NAME_PREFIX = 'kaneo-';
 
 export function kaneoAssistantName(role: string): string {
   return `${KANEO_ASSISTANT_NAME_PREFIX}${role}`;
+}
+
+/** Project-bound assistant name: `Kaneo · <projectName> · <role>`. */
+export function kaneoProjectAssistantName(projectName: string, role: string): string {
+  return `${KANEO_ASSISTANT_NAME_PREFIX}${projectName} · ${role}`;
 }
 
 export function kaneoSkillName(skill: string): string {
@@ -55,6 +71,97 @@ export function buildClaimPrompt(role: string, baseUrl: string): string {
     `working rules in your assistant rules, then submit a PR and set the task status to in-review. ` +
     `Kaneo API base URL: ${base || 'http://localhost:1337'}`
   );
+}
+
+// ── Project environment segment (rendered from the manifest) ────────────────
+
+export const KANEO_ENV_SEGMENT_START = '<!-- kaneo-project-environment -->';
+export const KANEO_ENV_SEGMENT_END = '<!-- /kaneo-project-environment -->';
+
+/**
+ * Render the project environment segment from a manifest: repository and
+ * branch guidance, the task status machine, and boundaries. Deterministic for
+ * a given manifest so identical envHash ⇒ identical segment.
+ *
+ * Repository truthfulness: `defaultBranch: null` renders branch-detection
+ * guidance, never a fabricated branch name. No repositories renders a
+ * no-repository statement without clone guidance.
+ */
+export function renderProjectEnvironmentSegment(manifest: KaneoEnvironmentManifest): string {
+  const project = manifest.identity.project;
+  const lines: string[] = [];
+  lines.push(KANEO_ENV_SEGMENT_START);
+  lines.push('## Project environment');
+  lines.push('');
+  if (!project) {
+    lines.push('This key is not bound to a Kaneo project; no project environment applies.');
+    lines.push(KANEO_ENV_SEGMENT_END);
+    return lines.join('\n');
+  }
+  lines.push(`Kaneo project: ${project.name} (${project.slug}). All task operations are confined to this project by the API key binding; do not attempt to access other projects.`);
+
+  const primary = primaryRepository(manifest);
+  if (!primary) {
+    lines.push('');
+    lines.push('**Repository:** this project has no connected version-control repository. Do not clone anything; work only on task descriptions and attached files.');
+  } else {
+    lines.push('');
+    lines.push(`**Primary repository:** ${primary.type} ${primary.owner}/${primary.name} (clone URL: ${primary.cloneUrl}).`);
+    lines.push(`Clone it into this workspace if no checkout exists yet, and never clone repositories outside this manifest.`);
+    if (primary.defaultBranch) {
+      lines.push(`The default branch is \`${primary.defaultBranch}\`.`);
+    } else {
+      lines.push('The default branch is not provided by Kaneo: after cloning, detect the primary branch (e.g. `git remote show origin`) instead of guessing a branch name.');
+    }
+    if (manifest.repositories.length > 1) {
+      const secondaries = manifest.repositories.filter((r) => r !== primary);
+      for (const repo of secondaries) {
+        lines.push(`**Secondary repository:** ${repo.type} ${repo.owner}/${repo.name} (clone URL: ${repo.cloneUrl}).`);
+      }
+    }
+  }
+
+  const statuses = manifest.workflow?.statuses ?? [];
+  if (statuses.length > 0) {
+    lines.push('');
+    lines.push(`**Task status machine:** ${statuses.join(' → ')}.`);
+    lines.push(`When submitting work for review, set the task status to \`${manifest.workflow?.reviewHandoff === 'code-review' ? 'in-review' : statuses[statuses.length - 1]}\`.`);
+    if (manifest.workflow?.mergePolicy === 'human-only') {
+      lines.push('Merging is performed by humans only: never merge or self-approve your own PR.');
+    }
+  }
+
+  if (isManifestVersionNewer(manifest.manifestVersion)) {
+    lines.push('');
+    lines.push(`Note: this Kaneo instance reports environment manifest v${manifest.manifestVersion}; some newer environment details may not be shown here.`);
+  }
+  lines.push('');
+  lines.push(KANEO_ENV_SEGMENT_END);
+  return lines.join('\n');
+}
+
+/**
+ * Replace (or append) the project environment segment in a rules document.
+ * Atomic per segment: the rest of the document (role AGENTS.md) is preserved.
+ */
+export function appendEnvironmentSegment(rules: string, segment: string): string {
+  const regex = new RegExp(
+    `${KANEO_ENV_SEGMENT_START.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${KANEO_ENV_SEGMENT_END.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n?`
+  );
+  const replaced = rules.replace(regex, '');
+  const base = replaced.trimEnd();
+  return base ? `${base}\n\n${segment}\n` : `${segment}\n`;
+}
+
+/**
+ * Allocate (create if missing) the per-project per-role workspace directory
+ * and return its absolute path. Calls the backend's dedicated
+ * `/api/fs/kaneo-workspace` endpoint, which validates the slug/role and
+ * creates `{managed-root}/kaneo-workspaces/<slug>/<role>/`.
+ */
+export async function allocateKaneoWorkspace(projectSlug: string, role: string): Promise<string> {
+  const dir = await ipcBridge.kaneoWorkspace.ensure.invoke({ project_slug: projectSlug, role });
+  return dir;
 }
 
 export type KaneoSyncRoleResult =
@@ -73,25 +180,23 @@ export function findKaneoAssistant(assistants: Assistant[], role: string): Assis
 }
 
 /**
- * Filter the assistant list for a role-scoped Kaneo key.
+ * Filter the assistant list for a project-bound Kaneo context.
  *
- * When `activeKaneoRole` is set (the role bound to the API key that was used to
- * import agent config), hide every other `Kaneo · <role>` assistant so the
- * Guide only surfaces the single role the key is authorized for. Non-Kaneo
- * assistants are unaffected, and if the bound role's assistant does not exist
- * yet we fall back to the full list rather than hiding everything.
+ * When a project context is active, hide every other `Kaneo · *` assistant
+ * within the same project (the key only authorizes one role there) while
+ * keeping Kaneo assistants from other projects and all non-Kaneo assistants
+ * visible. Falls back to the full list when the bound assistant does not exist
+ * yet.
  */
-export function filterAssistantsForActiveKaneoRole<T extends { name: string }>(
+export function filterAssistantsForKaneoContext<T extends { name: string }>(
   assistants: T[],
-  activeKaneoRole?: string
+  context: { projectName: string | null; agentRole: string } | undefined
 ): T[] {
-  if (!activeKaneoRole) return assistants;
-  const targetName = kaneoAssistantName(activeKaneoRole);
+  if (!context?.projectName) return assistants;
+  const targetName = kaneoProjectAssistantName(context.projectName, context.agentRole);
   const hasTarget = assistants.some((assistant) => assistant.name === targetName);
   if (!hasTarget) return assistants;
-  return assistants.filter(
-    (assistant) => !assistant.name.startsWith(KANEO_ASSISTANT_NAME_PREFIX) || assistant.name === targetName
-  );
+  return assistants.filter((assistant) => !assistant.name.startsWith(KANEO_ASSISTANT_NAME_PREFIX) || assistant.name === targetName);
 }
 
 /**
@@ -347,6 +452,199 @@ export async function syncKaneoAssistants(
   }
 
   return { results, importedSkills: Array.from(importedSkillNames) };
+}
+
+export type KaneoManifestSyncResult = KaneoSyncResult & {
+  context: KaneoContext;
+  /** Whether the envHash changed since the stored context (drift). */
+  envDrift: boolean;
+  /** Primary cloneUrl changed since last sync (re-clone needed). */
+  cloneUrlChanged: boolean;
+  /** A newer manifest major than this client supports (non-blocking notice). */
+  newerManifestVersion: boolean;
+  /** Skill drift warnings (same name, different content). */
+  skillDriftWarnings: string[];
+};
+
+/**
+ * Sync a project-bound Kaneo key from a bootstrap manifest: project-named
+ * assistant (upsert keyed by baseUrl/projectId/role), rules = role AGENTS.md +
+ * rendered project environment segment, per-project per-role workspace, and
+ * envHash drift detection against the stored context.
+ */
+export async function syncKaneoAssistantsFromManifest(options: {
+  baseUrl: string;
+  apiKey: string;
+  manifest: KaneoEnvironmentManifest;
+  config: KaneoConfigPackage;
+  templates: KaneoTemplates;
+  existing: Assistant[];
+}): Promise<KaneoManifestSyncResult> {
+  const { baseUrl, apiKey, manifest, config, templates, existing } = options;
+  const project = manifest.identity.project;
+  const role = manifest.identity.agentRole;
+  const skillDriftWarnings: string[] = [];
+
+  // The key is project-bound: the sync targets exactly its bound role.
+  if (!project) {
+    // Defensive: callers should route unbound keys to the legacy flow.
+    const legacy = await syncKaneoAssistants(baseUrl, apiKey, [manifest.identity.agentRole], existing);
+    return {
+      ...legacy,
+      context: contextFromManifest(manifest, baseUrl),
+      envDrift: false,
+      cloneUrlChanged: false,
+      newerManifestVersion: isManifestVersionNewer(manifest.manifestVersion),
+      skillDriftWarnings: [],
+    };
+  }
+
+  // Import skills (shared), with content-addressed collision handling.
+  const importedSkillNames = new Set<string>();
+  const availableSkills = await ipcBridge.fs.listAvailableSkills.invoke();
+  const installed = new Map(availableSkills.map((s: { name: string }) => [s.name, s]));
+  for (const skill of templates.skills) {
+    if (!skillAppliesToRole(skill.forRoles, role)) continue;
+    const targetName = kaneoSkillName(skill.name);
+    const content = config.skills[skill.name];
+    if (content === undefined) {
+      if (installed.has(targetName)) importedSkillNames.add(targetName);
+      continue;
+    }
+    // Content-addressed import: identical content re-imports idempotently;
+    // differing content for an existing skill is a drift signal — skip and warn.
+    const existingSkill = await readInstalledSkillContent(targetName);
+    if (existingSkill !== null && normalizeSkillContent(existingSkill) !== normalizeSkillContent(content)) {
+      skillDriftWarnings.push(skill.name);
+      if (installed.has(targetName)) importedSkillNames.add(targetName);
+      continue;
+    }
+    const importResult = await importKaneoSkill(skill.name, content);
+    if (importResult.ok) importedSkillNames.add(importResult.name);
+  }
+
+  const agentsMd = config.roles[role];
+  if (agentsMd === undefined) {
+    throw new Error(`Role "${role}" has no AGENTS.md in the Kaneo config package`);
+  }
+
+  // Workspace allocation (project-bound only).
+  const workspace = await allocateKaneoWorkspace(project.slug, role);
+
+  const description = templates.roles.find((r) => r.name === role)?.description ?? `Kaneo ${role} agent for ${project.name}`;
+  const enabledSkills = templates.skills
+    .filter((skill) => skillAppliesToRole(skill.forRoles, role) && importedSkillNames.has(kaneoSkillName(skill.name)))
+    .map((skill) => kaneoSkillName(skill.name));
+
+  // Drift detection against the stored context (if any).
+  const existingContexts = await getKaneoContextsSnapshot();
+  const previous = existingContexts.find(
+    (c) => c.baseUrl === baseUrl && c.projectId === project.id && c.agentRole === role
+  );
+  const envDrift = Boolean(previous?.manifestSummary && previous.manifestSummary.envHash !== manifest.envHash);
+  // A manifest change that alters repositories is covered by envHash drift.
+  // A dedicated cloneUrlChanged signal requires storing the last primary
+  // cloneUrl; v1 derives the re-clone notice from envDrift instead.
+  const cloneUrlChanged = envDrift;
+
+  const name = kaneoProjectAssistantName(project.name, role);
+  const rules = appendEnvironmentSegment(agentsMd, renderProjectEnvironmentSegment(manifest));
+  const rolePrompt = buildClaimPrompt(role, baseUrl);
+  let defaultAgentId: string | undefined;
+  try {
+    const managedAgents = await ipcBridge.acpConversation.getManagedAgents.invoke();
+    defaultAgentId = managedAgents.find((a: { id: string }) => Boolean(a.id))?.id;
+  } catch {
+    defaultAgentId = undefined;
+  }
+
+  // Project rename: match by context assistantId first (stable across renames),
+  // then by name (fresh import), never creating a duplicate.
+  const existingAssistant =
+    (previous?.assistantId && existing.find((a) => a.id === previous.assistantId)) ||
+    existing.find((a) => a.name === name);
+
+  const createAssistant = async () => {
+    const created = await ipcBridge.assistants.create.invoke({
+      name,
+      description,
+      agent_id: defaultAgentId,
+      custom_skill_names: enabledSkills,
+      prompts: [rolePrompt],
+    });
+    await writeAssistantRule(created.id, rules);
+    return created;
+  };
+
+  let assistantId: string;
+  let status: 'created' | 'updated';
+  if (existingAssistant) {
+    try {
+      await ipcBridge.assistants.update.invoke({
+        id: existingAssistant.id,
+        name,
+        description,
+        custom_skill_names: enabledSkills,
+        recommended_prompts: [rolePrompt],
+      });
+      await writeAssistantRule(existingAssistant.id, rules);
+      assistantId = existingAssistant.id;
+      status = 'updated';
+    } catch (updateError) {
+      const message = updateError instanceof Error ? updateError.message : String(updateError);
+      if (/not found|NOT_FOUND/i.test(message)) {
+        const created = await createAssistant();
+        assistantId = created.id;
+        status = 'created';
+      } else {
+        throw updateError;
+      }
+    }
+  } else {
+    const created = await createAssistant();
+    assistantId = created.id;
+    status = 'created';
+  }
+
+  // Upsert the context (preserves id/credential on reconnect) and record
+  // workspace + assistant id + the new manifest fingerprint.
+  const base = contextFromManifest(manifest, baseUrl);
+  const { context } = await upsertKaneoContext({ ...base, assistantId, workspace });
+  await updateKaneoContext(context.id, { assistantId, workspace });
+
+  return {
+    results: [{ role, status }],
+    importedSkills: Array.from(importedSkillNames),
+    context,
+    envDrift,
+    cloneUrlChanged,
+    newerManifestVersion: isManifestVersionNewer(manifest.manifestVersion),
+    skillDriftWarnings,
+  };
+}
+
+async function getKaneoContextsSnapshot(): Promise<KaneoContext[]> {
+  const { getKaneoContexts } = await import('./kaneoContexts');
+  return getKaneoContexts();
+}
+
+/** Read an installed custom skill's SKILL.md content for collision checks. */
+async function readInstalledSkillContent(targetName: string): Promise<string | null> {
+  try {
+    const skills = await ipcBridge.fs.listAvailableSkills.invoke();
+    const found = skills.find((s: { name: string }) => s.name === targetName);
+    if (!found?.location) return null;
+    const content = await ipcBridge.fs.readFile.invoke({
+      path: `${found.location}${found.location.endsWith('/') ? '' : '/'}SKILL.md`,
+    });
+    return content ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeSkillContent(content: string): string {
+  return content.replace(/\r\n/g, '\n').trim();
 }
 
 async function writeAssistantRule(assistantId: string, content: string): Promise<void> {
