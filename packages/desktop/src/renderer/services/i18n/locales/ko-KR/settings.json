@@ -1434,5 +1434,15 @@
   "kaneoSkillsOverview": "{{count}}개 스킬 사용 가능",
   "kaneoRoleSelected": "이 키는 {{role}} 역할을 가져옵니다.",
   "kaneoRoleMissing": "이 키에 역할이 없습니다.",
-  "kaneoRetryRole": "재시도"
+  "kaneoRetryRole": "재시도",
+  "kaneoProjectSelected": "이 키는 프로젝트 {{project}}의 {{role}} 역할을 가져옵니다.",
+  "kaneoProjectTag": "프로젝트: {{project}}",
+  "kaneoRepoLine": "기본 저장소: {{repo}} (브랜치: {{branch}})",
+  "kaneoRepoBranchUnknown": "클론 후 감지",
+  "kaneoManifestNewer": "이 Kaneo 인스턴스는 더 새로운 환경 형식을 사용합니다. 일부 환경 정보가 표시되지 않을 수 있습니다.",
+  "kaneoEnvDrift": "Kaneo 환경이 변경되었습니다({{repo}}). 동기화 후 규칙이 갱신됩니다. 저장소가 변경된 경우 워크스페이스에서 다시 클론하세요.",
+  "kaneoEnvDriftTag": "환경 변경됨",
+  "kaneoSkillDrift": "스킬 {{skill}}은(는) 이 Kaneo 인스턴스의 내용과 달라 설치된 버전을 유지했습니다.",
+  "kaneoSkillDriftTag": "스킬 불일치",
+  "kaneoKeyExpiring": "Kaneo API 키가 곧 만료됩니다. 새 키로 다시 연결하여 교체하세요."
 }

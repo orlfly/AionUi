@@ -1434,5 +1434,15 @@
   "kaneoSkillsOverview": "{{count}} 個のスキルが利用可能",
   "kaneoRoleSelected": "このキーは {{role}} ロールをインポートします。",
   "kaneoRoleMissing": "このキーにはロールが設定されていません。",
-  "kaneoRetryRole": "再試行"
+  "kaneoRetryRole": "再試行",
+  "kaneoProjectSelected": "このキーはプロジェクト {{project}} の {{role}} ロールをインポートします。",
+  "kaneoProjectTag": "プロジェクト：{{project}}",
+  "kaneoRepoLine": "メインリポジトリ：{{repo}}（ブランチ：{{branch}}）",
+  "kaneoRepoBranchUnknown": "クローン後に検出",
+  "kaneoManifestNewer": "この Kaneo インスタンスは新しい環境形式を使用しています。一部の環境情報が表示されない場合があります。",
+  "kaneoEnvDrift": "Kaneo 環境が変更されました（{{repo}}）。同期後にルールを更新します。リポジトリが変わった場合はワークスペースで再クローンしてください。",
+  "kaneoEnvDriftTag": "環境が変更されました",
+  "kaneoSkillDrift": "スキル {{skill}} はこの Kaneo インスタンスの内容と異なるため、インストール済みのものを維持しました。",
+  "kaneoSkillDriftTag": "スキル差異",
+  "kaneoKeyExpiring": "Kaneo API キーの有効期限が近づいています。新しいキーで再接続してローテーションしてください。"
 }

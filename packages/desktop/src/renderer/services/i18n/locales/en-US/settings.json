@@ -1432,5 +1432,15 @@
   "kaneoSkillsOverview": "{{count}} skills available",
   "kaneoRoleSelected": "This key imports the {{role}} role.",
   "kaneoRoleMissing": "This key has no bound role.",
-  "kaneoRetryRole": "Retry"
+  "kaneoRetryRole": "Retry",
+  "kaneoProjectSelected": "This key imports the {{role}} role for project {{project}}.",
+  "kaneoProjectTag": "Project: {{project}}",
+  "kaneoRepoLine": "Primary repository: {{repo}} (branch: {{branch}})",
+  "kaneoRepoBranchUnknown": "detect after cloning",
+  "kaneoManifestNewer": "This Kaneo instance uses a newer environment format. Some environment details may not be shown.",
+  "kaneoEnvDrift": "The Kaneo environment has changed ({{repo}}). Update the rules after sync; if the repository changed, re-clone it in the workspace.",
+  "kaneoEnvDriftTag": "Environment changed",
+  "kaneoSkillDrift": "Skill {{skill}} was kept as installed (content differs from this Kaneo instance).",
+  "kaneoSkillDriftTag": "Skill drift",
+  "kaneoKeyExpiring": "The Kaneo API key expires soon. Reconnect with a new key to rotate it."
 }

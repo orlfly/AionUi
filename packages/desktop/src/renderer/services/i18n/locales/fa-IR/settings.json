@@ -1432,5 +1432,15 @@
   "kaneoSkillsOverview": "{{count}} مهارت موجود است",
   "kaneoRoleSelected": "این کلید نقش {{role}} را وارد می‌کند.",
   "kaneoRoleMissing": "این کلید نقشی ندارد.",
-  "kaneoRetryRole": "تلاش مجدد"
+  "kaneoRetryRole": "تلاش مجدد",
+  "kaneoProjectSelected": "این کلید نقش {{role}} را برای پروژه {{project}} وارد می‌کند.",
+  "kaneoProjectTag": "پروژه: {{project}}",
+  "kaneoRepoLine": "مخزن اصلی: {{repo}} (شاخه: {{branch}})",
+  "kaneoRepoBranchUnknown": "پس از کلون تشخیص داده شود",
+  "kaneoManifestNewer": "این نمونه Kaneo از قالب محیطی جدیدتری استفاده می‌کند. ممکن است برخی جزئیات محیط نمایش داده نشوند.",
+  "kaneoEnvDrift": "محیط Kaneo تغییر کرده است ({{repo}}). پس از همگام‌سازی قوانین به‌روزرسانی می‌شوند؛ اگر مخزن تغییر کرده، آن را در فضای کاری دوباره کلون کنید.",
+  "kaneoEnvDriftTag": "محیط تغییر کرد",
+  "kaneoSkillDrift": "مهارت {{skill}} با محتوای این نمونه Kaneo متفاوت است؛ نسخه نصب‌شده حفظ شد.",
+  "kaneoSkillDriftTag": "ناهمسانی مهارت",
+  "kaneoKeyExpiring": "کلید API Kaneo به‌زودی منقضی می‌شود. برای جایگزینی، با کلید جدید دوباره متصل شوید."
 }

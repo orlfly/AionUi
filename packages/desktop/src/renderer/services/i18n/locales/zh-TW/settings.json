@@ -1434,5 +1434,15 @@
   "kaneoSkillsOverview": "共 {{count}} 個技能",
   "kaneoRoleSelected": "此 key 將匯入 {{role}} 角色。",
   "kaneoRoleMissing": "此 key 未綁定角色。",
-  "kaneoRetryRole": "重試"
+  "kaneoRetryRole": "重試",
+  "kaneoProjectSelected": "該 key 將匯入專案 {{project}} 的 {{role}} 角色。",
+  "kaneoProjectTag": "專案：{{project}}",
+  "kaneoRepoLine": "主倉庫：{{repo}}（分支：{{branch}}）",
+  "kaneoRepoBranchUnknown": "複製後偵測",
+  "kaneoManifestNewer": "該 Kaneo 實例使用了較新的環境格式，部分環境資訊可能無法顯示。",
+  "kaneoEnvDrift": "Kaneo 環境已變化（{{repo}}）。同步後會更新規則；若倉庫變更，請在工作區重新複製。",
+  "kaneoEnvDriftTag": "環境已變化",
+  "kaneoSkillDrift": "技能 {{skill}} 與該 Kaneo 實例內容不一致，已保留已安裝版本。",
+  "kaneoSkillDriftTag": "技能漂移",
+  "kaneoKeyExpiring": "Kaneo API key 即將到期，請使用新 key 重新連線以完成輪替。"
 }

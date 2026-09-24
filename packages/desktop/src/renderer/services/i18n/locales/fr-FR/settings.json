@@ -1432,5 +1432,15 @@
   "kaneoSkillsOverview": "{{count}} compétences disponibles",
   "kaneoRoleSelected": "Cette clé importe le rôle {{role}}.",
   "kaneoRoleMissing": "Cette clé n'a aucun rôle associé.",
-  "kaneoRetryRole": "Réessayer"
+  "kaneoRetryRole": "Réessayer",
+  "kaneoProjectSelected": "Cette clé importe le rôle {{role}} pour le projet {{project}}.",
+  "kaneoProjectTag": "Projet : {{project}}",
+  "kaneoRepoLine": "Dépôt principal : {{repo}} (branche : {{branch}})",
+  "kaneoRepoBranchUnknown": "à détecter après le clone",
+  "kaneoManifestNewer": "Cette instance Kaneo utilise un format d'environnement plus récent. Certains détails de l'environnement peuvent ne pas être affichés.",
+  "kaneoEnvDrift": "L'environnement Kaneo a changé ({{repo}}). Les règles seront mises à jour après la synchronisation ; si le dépôt a changé, reclonnez-le dans l'espace de travail.",
+  "kaneoEnvDriftTag": "Environnement modifié",
+  "kaneoSkillDrift": "La compétence {{skill}} diffère du contenu de cette instance Kaneo ; la version installée a été conservée.",
+  "kaneoSkillDriftTag": "Divergence de compétence",
+  "kaneoKeyExpiring": "La clé API Kaneo expire bientôt. Reconnectez-vous avec une nouvelle clé pour la renouveler."
 }

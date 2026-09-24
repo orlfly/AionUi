@@ -1446,5 +1446,15 @@
   "kaneoSkillsOverview": "Доступно навыков: {{count}}",
   "kaneoRoleSelected": "Этот ключ импортирует роль {{role}}.",
   "kaneoRoleMissing": "У этого ключа нет роли.",
-  "kaneoRetryRole": "Повторить"
+  "kaneoRetryRole": "Повторить",
+  "kaneoProjectSelected": "Этот ключ импортирует роль {{role}} для проекта {{project}}.",
+  "kaneoProjectTag": "Проект: {{project}}",
+  "kaneoRepoLine": "Основной репозиторий: {{repo}} (ветка: {{branch}})",
+  "kaneoRepoBranchUnknown": "определить после клонирования",
+  "kaneoManifestNewer": "Этот экземпляр Kaneo использует более новый формат окружения. Некоторые сведения могут не отображаться.",
+  "kaneoEnvDrift": "Окружение Kaneo изменилось ({{repo}}). После синхронизации правила будут обновлены; если репозиторий изменился, склонируйте его заново в рабочей папке.",
+  "kaneoEnvDriftTag": "Окружение изменено",
+  "kaneoSkillDrift": "Навык {{skill}} отличается от содержимого этого экземпляра Kaneo; установленная версия сохранена.",
+  "kaneoSkillDriftTag": "Расхождение навыка",
+  "kaneoKeyExpiring": "Срок действия API-ключа Kaneo скоро истечёт. Подключитесь с новым ключом, чтобы заменить его."
 }

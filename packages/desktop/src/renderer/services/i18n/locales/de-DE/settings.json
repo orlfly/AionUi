@@ -1432,5 +1432,15 @@
   "kaneoSkillsOverview": "{{count}} Skills verfügbar",
   "kaneoRoleSelected": "Dieser Schlüssel importiert die Rolle {{role}}.",
   "kaneoRoleMissing": "Dieser Schlüssel ist keiner Rolle zugeordnet.",
-  "kaneoRetryRole": "Erneut versuchen"
+  "kaneoRetryRole": "Erneut versuchen",
+  "kaneoProjectSelected": "Dieser Schlüssel importiert die Rolle {{role}} für das Projekt {{project}}.",
+  "kaneoProjectTag": "Projekt: {{project}}",
+  "kaneoRepoLine": "Primäres Repository: {{repo}} (Branch: {{branch}})",
+  "kaneoRepoBranchUnknown": "nach dem Klonen ermitteln",
+  "kaneoManifestNewer": "Diese Kaneo-Instanz verwendet ein neueres Umgebungsformat. Einige Umgebungsdetails werden möglicherweise nicht angezeigt.",
+  "kaneoEnvDrift": "Die Kaneo-Umgebung hat sich geändert ({{repo}}). Nach dem Sync werden die Regeln aktualisiert; bei geändertem Repository im Workspace neu klonen.",
+  "kaneoEnvDriftTag": "Umgebung geändert",
+  "kaneoSkillDrift": "Skill {{skill}} weicht vom Inhalt dieser Kaneo-Instanz ab; die installierte Version wurde beibehalten.",
+  "kaneoSkillDriftTag": "Skill-Abweichung",
+  "kaneoKeyExpiring": "Der Kaneo-API-Schlüssel läuft bald ab. Zum Rotieren mit einem neuen Schlüssel neu verbinden."
 }

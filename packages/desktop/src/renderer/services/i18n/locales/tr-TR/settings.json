@@ -1432,5 +1432,15 @@
   "kaneoSkillsOverview": "{{count}} beceri kullanılabilir",
   "kaneoRoleSelected": "Bu anahtar {{role}} rolünü içe aktarır.",
   "kaneoRoleMissing": "Bu anahtarın bağlı bir rolü yok.",
-  "kaneoRetryRole": "Yeniden dene"
+  "kaneoRetryRole": "Yeniden dene",
+  "kaneoProjectSelected": "Bu anahtar, {{project}} projesi için {{role}} rolünü içe aktarır.",
+  "kaneoProjectTag": "Proje: {{project}}",
+  "kaneoRepoLine": "Birincil depo: {{repo}} (dal: {{branch}})",
+  "kaneoRepoBranchUnknown": "klonladıktan sonra algıla",
+  "kaneoManifestNewer": "Bu Kaneo örneği daha yeni bir ortam biçimi kullanıyor. Bazı ortam ayrıntıları gösterilmeyebilir.",
+  "kaneoEnvDrift": "Kaneo ortamı değişti ({{repo}}). Senkronizasyon sonrası kurallar güncellenir; depo değiştiyse çalışma alanında yeniden klonlayın.",
+  "kaneoEnvDriftTag": "Ortam değişti",
+  "kaneoSkillDrift": "{{skill}} becerisi bu Kaneo örneğinin içeriğinden farklı; yüklü sürüm korundu.",
+  "kaneoSkillDriftTag": "Beceri uyuşmazlığı",
+  "kaneoKeyExpiring": "Kaneo API anahtarının süresi yakında doluyor. Yenilemek için yeni anahtarla yeniden bağlanın."
 }
