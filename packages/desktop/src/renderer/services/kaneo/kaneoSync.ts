@@ -34,17 +34,8 @@ import {
   skillAppliesToRole,
   skillsForRoleFromTemplates,
 } from './kaneoClient';
-import {
-  type KaneoEnvironmentManifest,
-  isManifestVersionNewer,
-  primaryRepository,
-} from './kaneoManifest';
-import {
-  type KaneoContext,
-  contextFromManifest,
-  updateKaneoContext,
-  upsertKaneoContext,
-} from './kaneoContexts';
+import { type KaneoEnvironmentManifest, isManifestVersionNewer, primaryRepository } from './kaneoManifest';
+import { type KaneoContext, contextFromManifest, updateKaneoContext, upsertKaneoContext } from './kaneoContexts';
 
 export const KANEO_ASSISTANT_NAME_PREFIX = 'Kaneo · ';
 export const KANEO_SKILL_NAME_PREFIX = 'kaneo-';
@@ -98,20 +89,30 @@ export function renderProjectEnvironmentSegment(manifest: KaneoEnvironmentManife
     lines.push(KANEO_ENV_SEGMENT_END);
     return lines.join('\n');
   }
-  lines.push(`Kaneo project: ${project.name} (${project.slug}). All task operations are confined to this project by the API key binding; do not attempt to access other projects.`);
+  lines.push(
+    `Kaneo project: ${project.name} (${project.slug}). All task operations are confined to this project by the API key binding; do not attempt to access other projects.`
+  );
 
   const primary = primaryRepository(manifest);
   if (!primary) {
     lines.push('');
-    lines.push('**Repository:** this project has no connected version-control repository. Do not clone anything; work only on task descriptions and attached files.');
+    lines.push(
+      '**Repository:** this project has no connected version-control repository. Do not clone anything; work only on task descriptions and attached files.'
+    );
   } else {
     lines.push('');
-    lines.push(`**Primary repository:** ${primary.type} ${primary.owner}/${primary.name} (clone URL: ${primary.cloneUrl}).`);
-    lines.push(`Clone it into this workspace if no checkout exists yet, and never clone repositories outside this manifest.`);
+    lines.push(
+      `**Primary repository:** ${primary.type} ${primary.owner}/${primary.name} (clone URL: ${primary.cloneUrl}).`
+    );
+    lines.push(
+      `Clone it into this workspace if no checkout exists yet, and never clone repositories outside this manifest.`
+    );
     if (primary.defaultBranch) {
       lines.push(`The default branch is \`${primary.defaultBranch}\`.`);
     } else {
-      lines.push('The default branch is not provided by Kaneo: after cloning, detect the primary branch (e.g. `git remote show origin`) instead of guessing a branch name.');
+      lines.push(
+        'The default branch is not provided by Kaneo: after cloning, detect the primary branch (e.g. `git remote show origin`) instead of guessing a branch name.'
+      );
     }
     if (manifest.repositories.length > 1) {
       const secondaries = manifest.repositories.filter((r) => r !== primary);
@@ -125,7 +126,9 @@ export function renderProjectEnvironmentSegment(manifest: KaneoEnvironmentManife
   if (statuses.length > 0) {
     lines.push('');
     lines.push(`**Task status machine:** ${statuses.join(' → ')}.`);
-    lines.push(`When submitting work for review, set the task status to \`${manifest.workflow?.reviewHandoff === 'code-review' ? 'in-review' : statuses[statuses.length - 1]}\`.`);
+    lines.push(
+      `When submitting work for review, set the task status to \`${manifest.workflow?.reviewHandoff === 'code-review' ? 'in-review' : statuses[statuses.length - 1]}\`.`
+    );
     if (manifest.workflow?.mergePolicy === 'human-only') {
       lines.push('Merging is performed by humans only: never merge or self-approve your own PR.');
     }
@@ -133,7 +136,9 @@ export function renderProjectEnvironmentSegment(manifest: KaneoEnvironmentManife
 
   if (isManifestVersionNewer(manifest.manifestVersion)) {
     lines.push('');
-    lines.push(`Note: this Kaneo instance reports environment manifest v${manifest.manifestVersion}; some newer environment details may not be shown here.`);
+    lines.push(
+      `Note: this Kaneo instance reports environment manifest v${manifest.manifestVersion}; some newer environment details may not be shown here.`
+    );
   }
   lines.push('');
   lines.push(KANEO_ENV_SEGMENT_END);
@@ -180,23 +185,34 @@ export function findKaneoAssistant(assistants: Assistant[], role: string): Assis
 }
 
 /**
- * Filter the assistant list for a project-bound Kaneo context.
+ * Filter the assistant list for the active Kaneo context.
  *
- * When a project context is active, hide every other `Kaneo · *` assistant
- * within the same project (the key only authorizes one role there) while
- * keeping Kaneo assistants from other projects and all non-Kaneo assistants
- * visible. Falls back to the full list when the bound assistant does not exist
- * yet.
+ * Project-bound context: hide every other `Kaneo · <project> · *` assistant of
+ * the same project (the key only authorizes one role there) while keeping
+ * Kaneo assistants from other projects and all non-Kaneo assistants visible.
+ * Project-less (legacy) context: fall back to the legacy role filter — hide
+ * every `Kaneo · <role>` assistant other than the bound role. In both cases
+ * the full list is returned when the bound assistant does not exist yet.
  */
 export function filterAssistantsForKaneoContext<T extends { name: string }>(
   assistants: T[],
   context: { projectName: string | null; agentRole: string } | undefined
 ): T[] {
-  if (!context?.projectName) return assistants;
+  if (!context) return assistants;
+  if (!context.projectName) {
+    // Legacy role filter (migrated unbound context).
+    const targetName = kaneoAssistantName(context.agentRole);
+    const hasTarget = assistants.some((assistant) => assistant.name === targetName);
+    if (!hasTarget) return assistants;
+    return assistants.filter(
+      (assistant) => !assistant.name.startsWith(KANEO_ASSISTANT_NAME_PREFIX) || assistant.name === targetName
+    );
+  }
   const targetName = kaneoProjectAssistantName(context.projectName, context.agentRole);
   const hasTarget = assistants.some((assistant) => assistant.name === targetName);
   if (!hasTarget) return assistants;
-  return assistants.filter((assistant) => !assistant.name.startsWith(KANEO_ASSISTANT_NAME_PREFIX) || assistant.name === targetName);
+  const projectPrefix = kaneoProjectAssistantName(context.projectName, '');
+  return assistants.filter((assistant) => !assistant.name.startsWith(projectPrefix) || assistant.name === targetName);
 }
 
 /**
@@ -531,7 +547,8 @@ export async function syncKaneoAssistantsFromManifest(options: {
   // Workspace allocation (project-bound only).
   const workspace = await allocateKaneoWorkspace(project.slug, role);
 
-  const description = templates.roles.find((r) => r.name === role)?.description ?? `Kaneo ${role} agent for ${project.name}`;
+  const description =
+    templates.roles.find((r) => r.name === role)?.description ?? `Kaneo ${role} agent for ${project.name}`;
   const enabledSkills = templates.skills
     .filter((skill) => skillAppliesToRole(skill.forRoles, role) && importedSkillNames.has(kaneoSkillName(skill.name)))
     .map((skill) => kaneoSkillName(skill.name));

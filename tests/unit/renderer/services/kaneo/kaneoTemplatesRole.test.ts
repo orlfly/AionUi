@@ -5,7 +5,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchKaneoTemplates } from '@renderer/services/kaneo/kaneoClient';
-import { filterAssistantsForActiveKaneoRole } from '@renderer/services/kaneo/kaneoSync';
+import { filterAssistantsForKaneoContext } from '@renderer/services/kaneo/kaneoSync';
 
 // --- fetchKaneoTemplates: optional agentRole parsing -----------------------
 
@@ -57,9 +57,9 @@ describe('fetchKaneoTemplates agentRole parsing', () => {
   });
 });
 
-// --- Guide role-scoped assistant filtering --------------------------------
+// --- Guide context-scoped assistant filtering (legacy role semantics) ------
 
-describe('filterAssistantsForActiveKaneoRole', () => {
+describe('filterAssistantsForKaneoContext (project-less legacy context)', () => {
   const list = [
     { name: 'Aion CLI', id: 'a' },
     { name: 'Kaneo · coding', id: 'k-coding' },
@@ -67,16 +67,16 @@ describe('filterAssistantsForActiveKaneoRole', () => {
     { name: 'Kaneo · testing', id: 'k-testing' },
   ];
 
-  it('keeps the whole list when no role is active', () => {
-    expect(filterAssistantsForActiveKaneoRole(list)).toEqual(list);
+  it('keeps the whole list when no context is active', () => {
+    expect(filterAssistantsForKaneoContext(list, undefined)).toEqual(list);
   });
 
   it('keeps only the bound-role Kaneo assistant plus non-Kaneo assistants', () => {
-    const out = filterAssistantsForActiveKaneoRole(list, 'devops');
+    const out = filterAssistantsForKaneoContext(list, { projectName: null, agentRole: 'devops' });
     expect(out.map((a) => a.name)).toEqual(['Aion CLI', 'Kaneo · devops']);
   });
 
   it('falls back to the full list when the bound role has no assistant yet', () => {
-    expect(filterAssistantsForActiveKaneoRole(list, 'ui-design')).toEqual(list);
+    expect(filterAssistantsForKaneoContext(list, { projectName: null, agentRole: 'ui-design' })).toEqual(list);
   });
 });
