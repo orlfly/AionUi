@@ -1429,6 +1429,7 @@
   "kaneoSyncSuccess": "Asistentes de Kaneo sincronizados",
   "kaneoSyncPartial": "Sincronización finalizada con fallos",
   "kaneoSyncFailed": "Error en la sincronización",
+  "kaneoCredentialStoreFailed": "No se pudo guardar la clave de Kaneo en el backend",
   "kaneoSkillsOverview": "{{count}} habilidades disponibles",
   "kaneoRoleSelected": "Esta clave importa el rol {{role}}.",
   "kaneoRoleMissing": "Esta clave no tiene un rol asignado.",

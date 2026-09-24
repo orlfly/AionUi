@@ -1431,6 +1431,7 @@
   "kaneoSyncSuccess": "Kaneo アシスタントの同期が完了しました",
   "kaneoSyncPartial": "同期が完了しましたが、一部のロールに失敗しました",
   "kaneoSyncFailed": "同期に失敗しました",
+  "kaneoCredentialStoreFailed": "バックエンドにKaneoキーを保存できませんでした",
   "kaneoSkillsOverview": "{{count}} 個のスキルが利用可能",
   "kaneoRoleSelected": "このキーは {{role}} ロールをインポートします。",
   "kaneoRoleMissing": "このキーにはロールが設定されていません。",

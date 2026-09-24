@@ -1432,6 +1432,7 @@
   "kaneoSyncSuccess": "Assistentes do Kaneo sincronizados",
   "kaneoSyncPartial": "Sincronização concluída com falhas",
   "kaneoSyncFailed": "Falha na sincronização",
+  "kaneoCredentialStoreFailed": "Não foi possível salvar a chave Kaneo no backend",
   "kaneoSkillsOverview": "{{count}} habilidades disponíveis",
   "kaneoRoleSelected": "Esta chave importa a função {{role}}.",
   "kaneoRoleMissing": "Esta chave não tem uma função associada.",

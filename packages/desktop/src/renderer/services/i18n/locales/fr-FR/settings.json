@@ -1429,6 +1429,7 @@
   "kaneoSyncSuccess": "Assistants Kaneo synchronisés",
   "kaneoSyncPartial": "Synchronisation terminée avec des échecs",
   "kaneoSyncFailed": "Échec de la synchronisation",
+  "kaneoCredentialStoreFailed": "Impossible d’enregistrer la clé Kaneo sur le backend",
   "kaneoSkillsOverview": "{{count}} compétences disponibles",
   "kaneoRoleSelected": "Cette clé importe le rôle {{role}}.",
   "kaneoRoleMissing": "Cette clé n'a aucun rôle associé.",

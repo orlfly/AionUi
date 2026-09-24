@@ -17,6 +17,7 @@ const calls = vi.hoisted(() => ({
   imported: [] as string[],
   importedContents: new Map<string, string>(),
   workspaces: [] as Array<{ project_slug: string; role: string }>,
+  credentials: [] as Array<Record<string, unknown>>,
   nextAssistantId: { n: 0 },
 }));
 
@@ -77,6 +78,19 @@ vi.mock('@/common', () => {
         ensure: invoke(async ({ project_slug, role }: { project_slug: string; role: string }) => {
           calls.workspaces.push({ project_slug, role });
           return `/data/kaneo-workspaces/${project_slug}/${role}`;
+        }),
+      },
+      kaneoCredentials: {
+        upsert: invoke(async (req: Record<string, unknown>) => {
+          calls.credentials.push(req);
+          return {
+            context_id: req.contextId,
+            base_url: req.base_url,
+            agent_role: req.agent_role,
+            project_id: req.project_id,
+            key_expires_at: req.key_expires_at,
+            updated_at: 1,
+          };
         }),
       },
     },
@@ -258,6 +272,7 @@ beforeEach(() => {
   calls.rules.length = 0;
   calls.imported.length = 0;
   calls.workspaces.length = 0;
+  calls.credentials.length = 0;
   calls.importedContents.clear();
   calls.nextAssistantId.n = 0;
   contextStore.values.clear();
@@ -405,6 +420,21 @@ describe('syncKaneoAssistantsFromManifest', () => {
 
     expect(result.results[0]).toEqual({ role: 'coding', status: 'created' });
     expect(calls.created).toHaveLength(1);
+  });
+
+  // 5.3 contract: the sync result exposes the stored context id so the import
+  // modal can address the one-shot credential PUT (kaneoCredentials.upsert)
+  // at it, and the context id never collides with assistant payloads.
+  it('returns the stored context id usable as the credential address', async () => {
+    const result = await syncKaneoAssistantsFromManifest(BASE_OPTIONS());
+    const contexts = await getKaneoContexts();
+    expect(result.context.id).toBe(contexts[0].id);
+    expect(result.context.id).toMatch(/^kctx-/);
+    // The sync itself must not touch the credential bridge; only the modal's
+    // saveCredential does, after a fully successful sync.
+    expect(calls.credentials).toHaveLength(0);
+    // And no assistant payload ever carries key material.
+    expect(JSON.stringify([...calls.created, ...calls.updated, ...calls.rules])).not.toContain('api_key');
   });
 });
 

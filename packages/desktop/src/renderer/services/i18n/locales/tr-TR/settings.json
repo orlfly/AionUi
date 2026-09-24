@@ -1429,6 +1429,7 @@
   "kaneoSyncSuccess": "Kaneo asistanları eşitlendi",
   "kaneoSyncPartial": "Eşitleme tamamlandı, ancak bazı roller başarısız oldu",
   "kaneoSyncFailed": "Eşitleme başarısız",
+  "kaneoCredentialStoreFailed": "Kaneo anahtarı arka uca kaydedilemedi",
   "kaneoSkillsOverview": "{{count}} beceri kullanılabilir",
   "kaneoRoleSelected": "Bu anahtar {{role}} rolünü içe aktarır.",
   "kaneoRoleMissing": "Bu anahtarın bağlı bir rolü yok.",

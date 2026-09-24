@@ -1444,6 +1444,7 @@
   "kaneoSyncSuccess": "Асистенти Kaneo синхронізовано",
   "kaneoSyncPartial": "Синхронізацію завершено, але частина ролей зазнала невдачі",
   "kaneoSyncFailed": "Синхронізація не вдалася",
+  "kaneoCredentialStoreFailed": "Не вдалося зберегти ключ Kaneo у бекенді",
   "kaneoSkillsOverview": "Доступно навичок: {{count}}",
   "kaneoRoleSelected": "Цей ключ імпортує роль {{role}}.",
   "kaneoRoleMissing": "Цей ключ не має ролі.",

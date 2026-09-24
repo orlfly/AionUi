@@ -1429,6 +1429,7 @@
   "kaneoSyncSuccess": "دستیارهای Kaneo همگام شدند",
   "kaneoSyncPartial": "همگام‌سازی با خطا همراه بود",
   "kaneoSyncFailed": "همگام‌سازی ناموفق بود",
+  "kaneoCredentialStoreFailed": "ذخیره کلید Kaneo در بک‌اند ناموفق بود",
   "kaneoSkillsOverview": "{{count}} مهارت موجود است",
   "kaneoRoleSelected": "این کلید نقش {{role}} را وارد می‌کند.",
   "kaneoRoleMissing": "این کلید نقشی ندارد.",

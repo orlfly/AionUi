@@ -2516,3 +2516,46 @@ export const kaneoWorkspace = {
   // `{managed-root}/kaneo-workspaces/<slug>/<role>/`.
   ensure: httpPost<string, { project_slug: string; role: string }>('/api/fs/kaneo-workspace'),
 };
+
+// ---------------------------------------------------------------------------
+// Kaneo credentials — routed to /api/kaneo-credentials
+// Backend stores keys AES-256-GCM encrypted at rest; responses carry metadata
+// only and never echo key material. Plaintext is transferred exactly once per
+// store/rotate call; callers must discard it immediately after.
+// ---------------------------------------------------------------------------
+
+/** Metadata of one stored credential (no key material). */
+export type KaneoCredentialMeta = {
+  context_id: string;
+  base_url: string;
+  agent_role: string;
+  project_id: string | null;
+  key_expires_at: string | null;
+  updated_at: number;
+};
+
+export const kaneoCredentials = {
+  // Metadata for every stored credential of the current user.
+  list: httpGet<KaneoCredentialMeta[]>('/api/kaneo-credentials'),
+  // Metadata for one stored credential; 404 when absent.
+  get: httpGet<KaneoCredentialMeta, { contextId: string }>(
+    (p) => `/api/kaneo-credentials/${encodeURIComponent(p.contextId)}`
+  ),
+  // Store or rotate the key for one context (plaintext one-shot; encrypted
+  // server-side before persistence). Returns the stored metadata.
+  upsert: httpPut<
+    KaneoCredentialMeta,
+    {
+      contextId: string;
+      base_url: string;
+      agent_role: string;
+      project_id: string | null;
+      key_expires_at: string | null;
+      api_key: string;
+    }
+  >((p) => `/api/kaneo-credentials/${encodeURIComponent(p.contextId)}`),
+  // Remove the stored credential; resolves `false` when nothing was stored.
+  remove: httpDelete<boolean, { contextId: string }>(
+    (p) => `/api/kaneo-credentials/${encodeURIComponent(p.contextId)}`
+  ),
+};

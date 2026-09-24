@@ -1431,6 +1431,7 @@
   "kaneoSyncSuccess": "Kaneo 어시스턴트 동기화 완료",
   "kaneoSyncPartial": "동기화가 완료되었지만 일부 역할이 실패했습니다",
   "kaneoSyncFailed": "동기화 실패",
+  "kaneoCredentialStoreFailed": "백엔드에 Kaneo 키를 저장하지 못했습니다",
   "kaneoSkillsOverview": "{{count}}개 스킬 사용 가능",
   "kaneoRoleSelected": "이 키는 {{role}} 역할을 가져옵니다.",
   "kaneoRoleMissing": "이 키에 역할이 없습니다.",

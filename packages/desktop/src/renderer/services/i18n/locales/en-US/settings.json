@@ -1429,6 +1429,7 @@
   "kaneoSyncSuccess": "Synced Kaneo assistants",
   "kaneoSyncPartial": "Sync finished with failures",
   "kaneoSyncFailed": "Sync failed",
+  "kaneoCredentialStoreFailed": "Could not store the Kaneo key on the backend",
   "kaneoSkillsOverview": "{{count}} skills available",
   "kaneoRoleSelected": "This key imports the {{role}} role.",
   "kaneoRoleMissing": "This key has no bound role.",

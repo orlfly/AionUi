@@ -16,9 +16,10 @@
 //    with legacy naming, exactly as before this change.
 //
 // The API key lives only in component state and is never written into any
-// assistant field or persisted storage. Plaintext is dropped when the modal
-// closes; main-process safeStorage persistence arrives with the credential
-// bridge (group 5).
+// assistant field or renderer-persisted storage. On a successful sync the
+// plaintext is transferred exactly once to the AionCore backend
+// (PUT /api/kaneo-credentials/{contextId}, AES-256-GCM at rest) and dropped
+// when the modal closes; rotation repeats the same one-shot PUT.
 
 import { Alert, Button, Input, Message, Modal, Tag } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -37,6 +38,7 @@ import {
 } from '@/renderer/services/kaneo/kaneoManifest';
 import { getKaneoContexts, updateKaneoContext } from '@/renderer/services/kaneo/kaneoContexts';
 import { syncKaneoAssistants, syncKaneoAssistantsFromManifest } from '@/renderer/services/kaneo/kaneoSync';
+import { ipcBridge } from '@/common';
 import { useAssistantList } from '@/renderer/hooks/assistant';
 import { configService } from '@/common/config/configService';
 
@@ -156,6 +158,36 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
     }
   }, [apiKey, baseUrl, t]);
 
+  // Bound role/project for the connected key (needed by saveCredential below).
+  const boundRole = manifest?.identity.agentRole ?? templates?.agentRole ?? null;
+  const project = manifest?.identity.project ?? null;
+
+  // One-shot credential transfer: store/rotate the plaintext key on the
+  // backend, addressed by the stored context's id. `keyExpiresAt` stays null
+  // until the Kaneo bootstrap manifest exposes the key's expiry; metadata
+  // updates ride the same PUT. Failures degrade to a warning: the sync itself
+  // already succeeded, and the Guide works without the stored credential
+  // until session MCP injection (group 6) needs it.
+  const saveCredential = useCallback(
+    async (contextId: string) => {
+      try {
+        await ipcBridge.kaneoCredentials.upsert.invoke({
+          contextId,
+          base_url: baseUrl.trim(),
+          agent_role: boundRole ?? '',
+          project_id: project?.id ?? null,
+          key_expires_at: null,
+          api_key: apiKey,
+        });
+      } catch (error) {
+        Message.warning(
+          `${t('settings.kaneoCredentialStoreFailed')}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    },
+    [apiKey, baseUrl, boundRole, project?.id, t]
+  );
+
   const handleSync = useCallback(async () => {
     if (!templates) return;
     setSyncing(true);
@@ -176,6 +208,7 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
         setResults(result.results);
         setSyncWarnings(result.skillDriftWarnings);
         setSyncDrift(result.envDrift);
+        await saveCredential(result.context.id);
         const failed = result.results.filter((r) => r.status === 'failed').length;
         if (failed === 0) {
           Message.success(t('settings.kaneoSyncSuccess'));
@@ -186,6 +219,12 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
         if (selectedRoles.length === 0) return;
         const result = await syncKaneoAssistants(baseUrl, apiKey, selectedRoles, assistants);
         setResults(result.results);
+        // Legacy flow: contexts only exist after migration; save the credential
+        // only when a matching project-less context exists to address it.
+        const legacyContextId = getKaneoContexts().find(
+          (c) => c.baseUrl === baseUrl.trim() && (c.projectId ?? null) === null && selectedRoles.includes(c.agentRole)
+        )?.id;
+        if (legacyContextId) await saveCredential(legacyContextId);
         const failed = result.results.filter((r) => r.status === 'failed').length;
         if (failed === 0) {
           Message.success(t('settings.kaneoSyncSuccess'));
@@ -200,12 +239,23 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
     } finally {
       setSyncing(false);
     }
-  }, [apiKey, assistants, baseUrl, configPackage, loadAssistants, manifest, onSynced, selectedRoles, t, templates]);
+  }, [
+    apiKey,
+    assistants,
+    baseUrl,
+    configPackage,
+    loadAssistants,
+    manifest,
+    onSynced,
+    saveCredential,
+    selectedRoles,
+    t,
+    templates,
+  ]);
 
   // Details for the API-key-bound role: description, applicable skills, and the
   // base config (AGENTS.md) fetched from the config package. kaneoRoleSelected
   // already announces the role; this fills in the rich preview below.
-  const boundRole = manifest?.identity.agentRole ?? templates?.agentRole ?? null;
   const boundRoleTemplate = templates?.roles.find((r) => r.name === boundRole);
   const boundRoleSkills = useMemo(
     () =>
@@ -216,7 +266,6 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
   );
   const boundRoleRules = boundRole && configPackage ? configPackage.roles[boundRole] : undefined;
 
-  const project = manifest?.identity.project ?? null;
   const primaryRepo = useMemo(
     () =>
       manifest ? (manifest.repositories.find((r) => r.role === 'primary') ?? manifest.repositories[0]) : undefined,

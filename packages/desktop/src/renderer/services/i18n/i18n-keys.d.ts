@@ -2065,6 +2065,7 @@ export type I18nKey =
   | 'settings.kaneoConnect'
   | 'settings.kaneoConnected'
   | 'settings.kaneoConnectionFailed'
+  | 'settings.kaneoCredentialStoreFailed'
   | 'settings.kaneoEnvDrift'
   | 'settings.kaneoEnvDriftTag'
   | 'settings.kaneoImport'
