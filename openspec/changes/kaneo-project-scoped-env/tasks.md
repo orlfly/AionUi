@@ -26,7 +26,7 @@ Implementation is split so each group lands independently revertible. Group 1 tr
 - [x] 3.5 Skill import collision handling: identical content idempotent, differing content skip + drift warning in sync results
 - [x] 3.6 Adapt KaneoImportModal: bootstrap preview (role, project, repository, skills), drift/expiry notices, active-context switching
 - [x] 3.7 Unit tests: naming/upsert/rename, segment rendering (all manifest edge cases), workspace paths, drift, collision handling
-- [ ] 3.8 Extend `tests/integration/kaneo-assistants-sync.integration.test.ts` with a bootstrap-mock round trip (rules contain project segment, workspace created, skills filtered)
+- [x] 3.8 New `tests/integration/kaneo-bootstrap-roundtrip.integration.test.ts`: bootstrap-mock round trip (rules contain project segment, workspace created, skills filtered; live aioncore workspace endpoint check gated on AIONUI_TEST_URL)
 
 ## 4. Guide integration
 
