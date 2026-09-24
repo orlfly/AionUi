@@ -16,6 +16,8 @@ import { type TFunction } from 'i18next';
 import type { NavigateFunction } from 'react-router-dom';
 import { mutate as swrMutate } from 'swr';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
+import { buildKaneoMcpServer, KANEO_MCP_BUILTIN_ID } from '@/renderer/services/kaneo/kaneoSync';
+import type { KaneoContext } from '@/renderer/services/kaneo/kaneoContexts';
 
 export type GuidSendDeps = {
   // Input state
@@ -42,6 +44,8 @@ export type GuidSendDeps = {
   assistantDefaultDisabledBuiltinSkillIds?: string[];
   availableMcpServers: IMcpServer[];
   selectedMcpServerIds: string[] | undefined;
+  /** Active Kaneo context, when the selected assistant matches one. */
+  kaneoContext?: KaneoContext;
   assistantDefaultMcpIds?: string[];
   isGoogleAuth: boolean;
 
@@ -88,6 +92,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     assistantDefaultDisabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds,
+    kaneoContext,
     assistantDefaultMcpIds,
     setMentionOpen,
     setMentionQuery,
@@ -122,6 +127,10 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     const selectedSessionMcpServers = availableMcpServers
       .filter((server) => selectedMcpServerIdSet.has(server.id) && server.builtin === true)
       .map((server) => toSessionMcpServer(server));
+    // Kaneo project-scoped env (G6): when the selected assistant matches a Kaneo
+    // context, append the session-injected kaneo MCP server. Its env carries
+    // `kaneo:<contextId>` sentinels that AionCore resolves at agent-build time.
+    const kaneoSessionServer = kaneoContext ? toSessionMcpServer(buildKaneoMcpServer(kaneoContext)) : null;
     const defaultSelectedMcpServerIds = assistantDefaultMcpIds;
     const defaultSelectedUserMcpServerIds = availableMcpServers
       .filter((server) => (defaultSelectedMcpServerIds ?? []).includes(server.id) && server.builtin !== true)
@@ -130,12 +139,13 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       selectedMcpServerIds !== undefined ? selectedAllMcpServerIds : defaultSelectedMcpServerIds;
     const selectedUserMcpServerIdsToSend =
       selectedMcpServerIds !== undefined ? selectedUserMcpServerIds : defaultSelectedUserMcpServerIds;
-    const selectedSessionMcpServersToSend =
+    const selectedSessionMcpServersToSend = (
       selectedMcpServerIds !== undefined
         ? selectedAllSessionMcpServers
         : availableMcpServers
             .filter((server) => (defaultSelectedMcpServerIds ?? []).includes(server.id))
-            .map((server) => toSessionMcpServer(server));
+            .map((server) => toSessionMcpServer(server))
+    ).concat(kaneoSessionServer ? [kaneoSessionServer] : []);
 
     // `current_model` is the aionrs provider selection and means nothing to a
     // CLI agent, which owns its own model list. Used as a blanket fallback it
@@ -244,7 +254,11 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
           default_files: files.map(chatFileRefPath),
           selected_mcp_server_ids: selectedUserMcpServerIdsToSend,
           selected_session_mcp_servers:
-            selectedMcpServerIds !== undefined ? selectedSessionMcpServers : selectedSessionMcpServersToSend,
+            selectedMcpServerIds !== undefined
+              ? kaneoSessionServer
+                ? [...selectedSessionMcpServers, kaneoSessionServer]
+                : selectedSessionMcpServers
+              : selectedSessionMcpServersToSend,
         },
       });
       if (!conversation || !conversation.id) {

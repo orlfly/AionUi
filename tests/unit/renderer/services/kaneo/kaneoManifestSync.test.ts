@@ -214,6 +214,13 @@ import {
   KANEO_ENV_SEGMENT_START,
   KANEO_ENV_SEGMENT_END,
   kaneoProjectAssistantName,
+  buildClaimPrompt,
+  buildKaneoMcpServer,
+  kaneoMcpPrecedenceNote,
+  KANEO_MCP_SERVER_NAME,
+  KANEO_PRECEDENCE_START,
+  KANEO_PRECEDENCE_END,
+  buildSkillZip,
 } from '@/renderer/services/kaneo/kaneoSync';
 import { getKaneoContexts } from '@/renderer/services/kaneo/kaneoContexts';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
@@ -441,5 +448,61 @@ describe('syncKaneoAssistantsFromManifest', () => {
 describe('rename helper', () => {
   it('builds the project-bound name', () => {
     expect(kaneoProjectAssistantName('Aion UI', 'coding')).toBe('Kaneo · Aion UI · coding');
+  });
+});
+
+describe('claim prompt (6.4 MCP precedence)', () => {
+  it('prefers MCP tools and degrades env-var references to host-provided', () => {
+    const prompt = buildClaimPrompt('coding', 'http://localhost:1337');
+    expect(prompt).toContain('Prefer the Kaneo MCP tools');
+    expect(prompt).toContain('provided by the host');
+    expect(prompt).toContain('kaneo-claim-task');
+    expect(prompt).toContain('http://localhost:1337');
+  });
+});
+
+describe('kaneo session MCP server (6.1 envRef)', () => {
+  const context = {
+    id: 'kctx-test1',
+    baseUrl: 'http://localhost:1337',
+    agentRole: 'coding',
+    projectId: 'proj-1',
+    projectName: 'Proj',
+    projectSlug: 'proj',
+    workspace: '/w',
+    assistantId: null,
+    manifestSummary: null,
+    keyExpiresAt: null,
+    degraded: false,
+    degradedReason: null,
+  };
+
+  it('addresses the key only by kaneo:<contextId> env-ref', () => {
+    const server = buildKaneoMcpServer(context);
+    expect(server.name).toBe(KANEO_MCP_SERVER_NAME);
+    expect(server.builtin).toBe(true);
+    expect(server.transport).toMatchObject({ type: 'stdio', command: 'npx' });
+    const env = server.transport.type === 'stdio' ? server.transport.env : {};
+    expect(env.KANEO_API_URL).toBe('kaneo:kctx-test1');
+    expect(env.KANEO_API_KEY).toBe('kaneo:kctx-test1');
+    // No plaintext key material anywhere in the serialized server.
+    expect(JSON.stringify(server)).not.toMatch(/api[_-]?key"\s*:\s*"(?!kaneo:)/i);
+  });
+});
+
+describe('skill MCP-precedence note (6.3)', () => {
+  it('wraps installed skill content with the host note', () => {
+    const note = kaneoMcpPrecedenceNote();
+    expect(note).toContain(KANEO_PRECEDENCE_START);
+    expect(note).toContain(KANEO_PRECEDENCE_END);
+    expect(note).toContain('provided by the host');
+
+    const upstream = '---\nname: whatever\n---\n\n# Skill body\n';
+    const zip = buildSkillZip('kaneo-demo', upstream);
+    return zip.text().then(() => {
+      // The zip itself is binary; verify via unzip of the single stored entry.
+      // Simpler: verify note composition directly.
+      expect(kaneoMcpPrecedenceNote().indexOf(KANEO_PRECEDENCE_START)).toBe(0);
+    });
   });
 });

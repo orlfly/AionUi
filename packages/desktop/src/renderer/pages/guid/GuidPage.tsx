@@ -277,6 +277,7 @@ const GuidPage: React.FC = () => {
     assistantDefaultDisabledBuiltinSkillIds: resolvedAssistantDefaults.disabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds: guidSelectedMcpServerIds,
+    kaneoContext: kaneoGuide.context,
     assistantDefaultMcpIds: resolvedAssistantDefaults.mcpIds,
     isGoogleAuth: modelSelection.isGoogleAuth,
 

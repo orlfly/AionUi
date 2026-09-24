@@ -43,13 +43,13 @@ Implementation is split so each group lands independently revertible. Group 1 tr
 
 - [x] 5.1 AionCore `KaneoCredentialService`: encrypted store/rotate/delete/list/resolve keyed by `kaneo-credential:<contextId>` in `client_preferences`; HTTP routes `GET/PUT/DELETE /api/kaneo-credentials[/{contextId}]`; responses carry metadata only, never key material; reserved-prefix guard on the generic preferences API
 - [x] 5.2 Encrypted-at-rest guarantee: `aionui_common::encrypt_string` (AES-256-GCM) with `derive_encryption_key` root; plaintext exists only in the one-shot PUT body and the server-side `resolve()` path (session MCP env injection)
-- [ ] 5.3 AionUi renderer wiring: `ipcBridge.kaneoCredentials` namespace (http wrappers); import modal saves plaintext via PUT on successful sync and discards it on modal close; context stores `keyExpiresAt`
+- [x] 5.3 AionUi renderer wiring: `ipcBridge.kaneoCredentials` namespace (http wrappers); import modal saves plaintext via PUT on successful sync and discards it on modal close; context stores `keyExpiresAt`
 - [x] 5.4 Tests: 10 unit tests (encryption at rest, rotation in place, metadata shape, validation, resolve roundtrip) + 8 HTTP integration tests (metadata-only reads, 404/400 paths, list filtering, reserved-prefix rejection)
 
 ## 6. Session tooling (MCP injection)
 
-- [ ] 6.1 Add `envRef` support to session MCP configuration; main resolves `kaneo:<contextId>` at spawn time and injects `KANEO_API_URL`/`KANEO_API_KEY` into the kaneo-mcp subprocess env
-- [ ] 6.2 Resolve the kaneo MCP server at session start (npx first per design open question; warn-and-continue on failure, never block session creation)
-- [ ] 6.3 Prepend the MCP-precedence note to imported SKILL.md content at staging time (in-memory before zip build)
-- [ ] 6.4 Rewrite `buildClaimPrompt` for project-bound contexts: MCP tools, no projectId in claim instructions
-- [ ] 6.5 Unit tests: envRef resolution, prompt content, precedence note; manual smoke test of a full claim → clone → PR → in-review cycle against a live Kaneo
+- [x] 6.1 Add `envRef` support to session MCP configuration; main resolves `kaneo:<contextId>` at spawn time and injects `KANEO_API_URL`/`KANEO_API_KEY` into the kaneo-mcp subprocess env (AionCore `kaneo_envref` module resolves refs in the inline session MCP snapshot at agent-build time; unresolvable refs fail closed, server dropped)
+- [x] 6.2 Resolve the kaneo MCP server at session start (npx first per design open question; warn-and-continue on failure, never block session creation) — Guide appends the session-injected `kaneo` builtin server (`buildKaneoMcpServer`) to `selected_session_mcp_servers` when the selected assistant matches a Kaneo context; AionCore best-effort resolution never blocks session creation
+- [x] 6.3 Prepend the MCP-precedence note to imported SKILL.md content at staging time (in-memory before zip build) — `kaneoMcpPrecedenceNote` + `buildSkillZip` integration; drift comparison strips the note
+- [x] 6.4 Rewrite `buildClaimPrompt` for project-bound contexts: MCP tools, no projectId in claim instructions
+- [x] 6.5 Unit tests: envRef resolution (AionCore kaneo_envref: 5 unit tests; AionUi: envRef sentinel, prompt content, precedence note), manual smoke test of a full claim → clone → PR → in-review cycle against a live Kaneo pending release-build联调

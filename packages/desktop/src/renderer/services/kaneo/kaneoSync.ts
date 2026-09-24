@@ -36,6 +36,7 @@ import {
 } from './kaneoClient';
 import { type KaneoEnvironmentManifest, isManifestVersionNewer, primaryRepository } from './kaneoManifest';
 import { type KaneoContext, contextFromManifest, updateKaneoContext, upsertKaneoContext } from './kaneoContexts';
+import type { IMcpServer } from '@/common/config/storage';
 
 export const KANEO_ASSISTANT_NAME_PREFIX = 'Kaneo · ';
 export const KANEO_SKILL_NAME_PREFIX = 'kaneo-';
@@ -58,10 +59,45 @@ export function buildClaimPrompt(role: string, baseUrl: string): string {
   const base = baseUrl.trim().replace(/\/+$/, '');
   return (
     `Claim your next Kaneo task and complete it according to your role rules. ` +
-    `Use the ${kaneoSkillName('claim-task')} skill: claim a task matching your role, work it following the ` +
-    `working rules in your assistant rules, then submit a PR and set the task status to in-review. ` +
-    `Kaneo API base URL: ${base || 'http://localhost:1337'}`
+    `Prefer the Kaneo MCP tools when they are available in this session: use them to claim a task matching your ` +
+    `role, work it following the working rules in your assistant rules, then submit a PR and set the task status ` +
+    `to in-review. If the Kaneo MCP tools are not available, fall back to the ${kaneoSkillName('claim-task')} ` +
+    `skill; it may reference the KANEO_API_KEY environment variable, which is provided by the host — do not ask ` +
+    `for a key and do not need one. Kaneo API base URL: ${base || 'http://localhost:1337'}`
   );
+}
+
+// ── Session MCP server (project-scoped env) ───────────────────────────────
+
+export const KANEO_MCP_SERVER_NAME = 'kaneo';
+export const KANEO_MCP_BUILTIN_ID = 'builtin-kaneo';
+
+/**
+ * Build the Kaneo builtin session MCP server for a stored context. The key is
+ * addressed ONLY by env-ref sentinel (`kaneo:<contextId>`): AionCore resolves
+ * the ref against the encrypted credential store at agent-build time and
+ * injects the decrypted KANEO_API_URL/KANEO_API_KEY into the spawned MCP
+ * subprocess env. Plaintext key material never appears here.
+ */
+export function buildKaneoMcpServer(context: KaneoContext): IMcpServer {
+  const envRef = `kaneo:${context.id}`;
+  const env: Record<string, string> = {
+    KANEO_API_URL: envRef,
+    KANEO_API_KEY: envRef,
+  };
+  const serverConfig = { command: 'npx', args: ['-y', 'kaneo-mcp@latest'], env };
+  const now = Date.now();
+  return {
+    id: KANEO_MCP_BUILTIN_ID,
+    name: KANEO_MCP_SERVER_NAME,
+    description: 'Kaneo task tools bound to the imported project (session-injected).',
+    enabled: true,
+    builtin: true,
+    transport: { type: 'stdio', command: serverConfig.command, args: serverConfig.args, env },
+    original_json: JSON.stringify({ mcpServers: { [KANEO_MCP_SERVER_NAME]: serverConfig } }, null, 2),
+    created_at: now,
+    updated_at: now,
+  };
 }
 
 // ── Project environment segment (rendered from the manifest) ────────────────
@@ -248,6 +284,28 @@ export async function importKaneoSkill(
 }
 
 /**
+ * MCP-precedence note (design D5/6.3): prepended to imported SKILL.md content
+ * at staging time. Kaneo MCP tools (session-injected) take precedence over the
+ * curl snippets in the skill body; env-var references degrade to "provided by
+ * the host". The original Kaneo zip content is never modified server-side.
+ */
+export const KANEO_PRECEDENCE_START = '<!-- kaneo-mcp-precedence -->';
+export const KANEO_PRECEDENCE_END = '<!-- /kaneo-mcp-precedence -->';
+
+export function kaneoMcpPrecedenceNote(): string {
+  return (
+    KANEO_PRECEDENCE_START +
+    '\n' +
+    '> **Host note:** when Kaneo MCP tools are available in this session, prefer them over the\n' +
+    '> curl/HTTP snippets below — they are already authenticated by the host. References to the\n' +
+    '> `KANEO_API_KEY` environment variable mean "provided by the host": the value is injected\n' +
+    '> into the tool process automatically; never ask the user for it.\n' +
+    KANEO_PRECEDENCE_END +
+    '\n\n'
+  );
+}
+
+/**
  * Rewrite the `name:` field in a SKILL.md frontmatter to `skillDir`.
  * The skills import endpoint derives the installed skill name from the
  * frontmatter `name:` when present (falling back to the zip entry folder), so
@@ -264,7 +322,7 @@ export function rewriteSkillName(skillMdContent: string, skillName: string): str
 
 /** Build a zip blob with a single `<skillDir>/SKILL.md` entry (stored, no compression). */
 export function buildSkillZip(skillDir: string, skillMdContent: string): Blob {
-  const content = rewriteSkillName(skillMdContent, skillDir);
+  const content = rewriteSkillName(kaneoMcpPrecedenceNote() + skillMdContent, skillDir);
   const encoder = new TextEncoder();
   const nameBytes = encoder.encode(`${skillDir}/SKILL.md`);
   const dataBytes = encoder.encode(content);
@@ -529,8 +587,13 @@ export async function syncKaneoAssistantsFromManifest(options: {
     }
     // Content-addressed import: identical content re-imports idempotently;
     // differing content for an existing skill is a drift signal — skip and warn.
+    // The installed copy carries the host MCP-precedence note (6.3), so strip
+    // it before comparing against the upstream Kaneo content.
     const existingSkill = await readInstalledSkillContent(targetName);
-    if (existingSkill !== null && normalizeSkillContent(existingSkill) !== normalizeSkillContent(content)) {
+    if (
+      existingSkill !== null &&
+      normalizeSkillContent(stripKaneoPrecedenceNote(existingSkill)) !== normalizeSkillContent(content)
+    ) {
       skillDriftWarnings.push(skill.name);
       if (installed.has(targetName)) importedSkillNames.add(targetName);
       continue;
@@ -662,6 +725,15 @@ async function readInstalledSkillContent(targetName: string): Promise<string | n
 
 function normalizeSkillContent(content: string): string {
   return content.replace(/\r\n/g, '\n').trim();
+}
+
+/** Remove the host MCP-precedence note (6.3) from installed skill content. */
+function stripKaneoPrecedenceNote(content: string): string {
+  const start = content.indexOf(KANEO_PRECEDENCE_START);
+  if (start === -1) return content;
+  const end = content.indexOf(KANEO_PRECEDENCE_END, start);
+  if (end === -1) return content;
+  return (content.slice(0, start) + content.slice(end + KANEO_PRECEDENCE_END.length)).replace(/^\n+/, '');
 }
 
 async function writeAssistantRule(assistantId: string, content: string): Promise<void> {
