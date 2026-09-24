@@ -13,5 +13,9 @@
     "specifyWorkspace": "選擇專案資料夾",
     "searchPlaceholder": "搜尋專案…",
     "noProject": "不使用專案"
-  }
+  },
+  "kaneoContextDegraded": "Kaneo 綁定已失效",
+  "kaneoKeyExpired": "Kaneo key 已過期",
+  "kaneoKeyExpiringSoon": "Kaneo key 即將到期",
+  "kaneoReconnectHint": "請在助手設定中用新 key 重新連線以恢復。"
 }

@@ -61,9 +61,7 @@ export type KaneoEnvironmentManifest = {
 };
 
 /** The bootstrap outcome: either a manifest or an explicit fallback signal. */
-export type KaneoBootstrapResult =
-  | { kind: 'manifest'; manifest: KaneoEnvironmentManifest }
-  | { kind: 'unavailable' };
+export type KaneoBootstrapResult = { kind: 'manifest'; manifest: KaneoEnvironmentManifest } | { kind: 'unavailable' };
 
 function isManifestShape(value: unknown): value is KaneoEnvironmentManifest {
   if (!value || typeof value !== 'object') return false;

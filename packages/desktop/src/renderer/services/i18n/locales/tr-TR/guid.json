@@ -13,5 +13,9 @@
     "specifyWorkspace": "Proje klasörü seç",
     "searchPlaceholder": "Proje ara…",
     "noProject": "Proje Yok"
-  }
+  },
+  "kaneoContextDegraded": "Kaneo bağlantısı bozuldu",
+  "kaneoKeyExpired": "Kaneo anahtarının süresi doldu",
+  "kaneoKeyExpiringSoon": "Kaneo anahtarının süresi yakında doluyor",
+  "kaneoReconnectHint": "Geri yüklemek için Asistan ayarlarından yeni anahtarla yeniden bağlanın."
 }

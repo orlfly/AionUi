@@ -31,5 +31,9 @@
     "statusTesting": "Latenz wird gemessen...",
     "statusUnreachable": "Nicht erreichbar",
     "statusAvailable": "Verfügbar"
-  }
+  },
+  "kaneoContextDegraded": "Kaneo-Bindung beeinträchtigt",
+  "kaneoKeyExpired": "Kaneo-Schlüssel abgelaufen",
+  "kaneoKeyExpiringSoon": "Kaneo-Schlüssel läuft bald ab",
+  "kaneoReconnectHint": "In den Assistenten-Einstellungen mit einem neuen Schlüssel neu verbinden, um ihn wiederherzustellen."
 }

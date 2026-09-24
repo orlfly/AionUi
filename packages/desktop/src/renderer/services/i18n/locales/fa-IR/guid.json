@@ -13,5 +13,9 @@
     "specifyWorkspace": "انتخاب پوشه پروژه",
     "searchPlaceholder": "جستجوی پروژه‌ها…",
     "noProject": "بدون پروژه"
-  }
+  },
+  "kaneoContextDegraded": "اتصال Kaneo مختل شده است",
+  "kaneoKeyExpired": "کلید Kaneo منقضی شده است",
+  "kaneoKeyExpiringSoon": "کلید Kaneo به‌زودی منقضی می‌شود",
+  "kaneoReconnectHint": "برای بازیابی، در تنظیمات دستیارها با کلید جدید دوباره متصل شوید."
 }

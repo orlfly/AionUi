@@ -13,5 +13,9 @@
     "specifyWorkspace": "Select project folder",
     "searchPlaceholder": "Search projects…",
     "noProject": "No Project"
-  }
+  },
+  "kaneoContextDegraded": "Kaneo binding degraded",
+  "kaneoKeyExpired": "Kaneo key expired",
+  "kaneoKeyExpiringSoon": "Kaneo key expires soon",
+  "kaneoReconnectHint": "Reconnect with a new key in Assistant settings to restore it."
 }

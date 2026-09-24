@@ -13,5 +13,9 @@
     "specifyWorkspace": "프로젝트 폴더 선택",
     "searchPlaceholder": "프로젝트 검색…",
     "noProject": "프로젝트 없음"
-  }
+  },
+  "kaneoContextDegraded": "Kaneo 바인딩이 중단되었습니다",
+  "kaneoKeyExpired": "Kaneo 키가 만료되었습니다",
+  "kaneoKeyExpiringSoon": "Kaneo 키가 곧 만료됩니다",
+  "kaneoReconnectHint": "어시스턴트 설정에서 새 키로 다시 연결하여 복구하세요."
 }

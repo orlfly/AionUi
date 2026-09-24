@@ -13,5 +13,9 @@
     "specifyWorkspace": "选择项目文件夹",
     "searchPlaceholder": "搜索项目…",
     "noProject": "不使用项目"
-  }
+  },
+  "kaneoContextDegraded": "Kaneo 绑定已失效",
+  "kaneoKeyExpired": "Kaneo key 已过期",
+  "kaneoKeyExpiringSoon": "Kaneo key 即将过期",
+  "kaneoReconnectHint": "请在助手设置中用新 key 重新连接以恢复。"
 }

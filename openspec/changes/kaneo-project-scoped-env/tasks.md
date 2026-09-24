@@ -30,10 +30,10 @@ Implementation is split so each group lands independently revertible. Group 1 tr
 
 ## 4. Guide integration
 
-- [ ] 4.1 Auto-preselect the active context's workspace when its assistant is selected in the Guide (reuse `dir` state; user override preserved)
-- [ ] 4.2 Add context/degradation badges and expiry warning (<7 days) with rotate action on the assistant card
-- [ ] 4.3 403 bound-project and 401 expired-key detection on Kaneo errors → mark context degraded; reconnect clears it
-- [ ] 4.4 Unit/DOM tests for preselection and badge states
+- [x] 4.1 Auto-preselect the context workspace when its assistant is selected in the Guide (`useKaneoGuideContext`; reuse `dir` state; user override preserved)
+- [x] 4.2 Add degradation/expiry badge on the Guide input area for the selected assistant's bound context (<7 days warning, expired/degraded red); rotate flow = reconnect via the import modal
+- [x] 4.3 401/403 KaneoConnectionError in the import modal connect flow → mark stored contexts for the instance degraded; successful sync clears it (upsert refreshes from the manifest)
+- [x] 4.4 DOM tests `tests/unit/renderer/useKaneoGuideContext.dom.test.ts` (11 cases: matching, preselection/override, degraded/expiry states, degraded marking)
 
 ## 5. Credential storage (main process + preload)
 

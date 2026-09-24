@@ -13,5 +13,9 @@
     "specifyWorkspace": "Sélectionnez le dossier du projet",
     "searchPlaceholder": "Rechercher des projets…",
     "noProject": "Aucun projet"
-  }
+  },
+  "kaneoContextDegraded": "Liaison Kaneo dégradée",
+  "kaneoKeyExpired": "Clé Kaneo expirée",
+  "kaneoKeyExpiringSoon": "La clé Kaneo expire bientôt",
+  "kaneoReconnectHint": "Reconnectez-vous avec une nouvelle clé dans les réglages des assistants pour la restaurer."
 }

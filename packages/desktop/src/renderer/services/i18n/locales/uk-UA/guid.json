@@ -13,5 +13,9 @@
     "specifyWorkspace": "Вибрати папку проєкту",
     "searchPlaceholder": "Пошук проєктів…",
     "noProject": "Без проєкту"
-  }
+  },
+  "kaneoContextDegraded": "Прив'язку Kaneo порушено",
+  "kaneoKeyExpired": "Термін дії ключа Kaneo закінчився",
+  "kaneoKeyExpiringSoon": "Термін дії ключа Kaneo скоро закінчиться",
+  "kaneoReconnectHint": "Підключіться знову з новим ключем у налаштуваннях асистентів, щоб відновити."
 }

@@ -35,7 +35,7 @@ import {
   isManifestVersionNewer,
   type KaneoEnvironmentManifest,
 } from '@/renderer/services/kaneo/kaneoManifest';
-import { getKaneoContexts } from '@/renderer/services/kaneo/kaneoContexts';
+import { getKaneoContexts, updateKaneoContext } from '@/renderer/services/kaneo/kaneoContexts';
 import { syncKaneoAssistants, syncKaneoAssistantsFromManifest } from '@/renderer/services/kaneo/kaneoSync';
 import { useAssistantList } from '@/renderer/hooks/assistant';
 import { configService } from '@/common/config/configService';
@@ -86,6 +86,24 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
     }
   }, [visible]);
 
+  // D7: a 401 (expired key) or 403 (key no longer bound / revoked) on connect
+  // marks every stored context for this instance degraded; the next successful
+  // sync/connect clears it (upsert refreshes `degraded` from the manifest).
+  const degradeContextsOnError = useCallback(
+    async (error: unknown) => {
+      if (!(error instanceof KaneoConnectionError)) return;
+      if (error.kind !== 'unauthorized') return;
+      const contexts = getKaneoContexts().filter((c) => c.baseUrl === baseUrl.trim());
+      for (const c of contexts) {
+        await updateKaneoContext(c.id, {
+          degraded: true,
+          degradedReason: error.message.includes('HTTP 401') ? 'key-expired-or-revoked' : 'binding-revoked',
+        });
+      }
+    },
+    [baseUrl]
+  );
+
   const handleConnect = useCallback(async () => {
     setConnecting(true);
     setConnectError(null);
@@ -127,6 +145,7 @@ const KaneoImportModal: React.FC<KaneoImportModalProps> = ({ visible, onCancel, 
       }
       setConfigPackage(cfg);
     } catch (error) {
+      await degradeContextsOnError(error).catch(() => {});
       const messageText =
         error instanceof KaneoConnectionError
           ? `${t('settings.kaneoConnectionFailed')}: ${error.message}`

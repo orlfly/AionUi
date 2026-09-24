@@ -27,6 +27,7 @@ import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidModelSelection } from './hooks/useGuidModelSelection';
 import { useGuidSend } from './hooks/useGuidSend';
 import { useTypewriterPlaceholder } from './hooks/useTypewriterPlaceholder';
+import { useKaneoGuideContext } from './hooks/useKaneoGuideContext';
 import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
 import { resolveGuidAssistantDefaults } from './utils/assistantDefaults';
 import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
@@ -35,7 +36,7 @@ import { useOpenFileSelector } from '@/renderer/hooks/file/useOpenFileSelector';
 import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
 import { useLiveTranscriptInsertion } from '@/renderer/hooks/system/useLiveTranscriptInsertion';
 import { ArrowRightUp } from '@icon-park/react';
-import { Button, ConfigProvider } from '@arco-design/web-react';
+import { Button, ConfigProvider, Tag } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -145,6 +146,12 @@ const GuidPage: React.FC = () => {
 
   const guidInput = useGuidInput({
     locationState: location.state as { workspace?: string } | null,
+  });
+  // Kaneo context binding (group 4): workspace preselection + badge state.
+  const kaneoGuide = useKaneoGuideContext({
+    selectedAssistantId: agentSelection.selectedAssistantId,
+    dir: guidInput.dir,
+    setDir: guidInput.setDir,
   });
   // The `/open` builtin + attach picker browse the backend machine's filesystem
   // (native dialog / server-fs) → `local` refs, not uploads.
@@ -702,6 +709,28 @@ const GuidPage: React.FC = () => {
             onSelectWorkspace={(dir) => guidInput.setDir(dir)}
             onClearWorkspace={() => guidInput.setDir('')}
           />
+
+          {/* Kaneo context badge row (group 4): degradation/expiry signals for
+              the selected assistant's bound context. Hidden without a match. */}
+          {kaneoGuide.context && (kaneoGuide.activeContextDegraded || kaneoGuide.expired || kaneoGuide.expiringSoon) ? (
+            <div className='mt-10px w-full ps-20px text-start animate-fade-in'>
+              <Tag
+                size='small'
+                bordered={false}
+                color={kaneoGuide.activeContextDegraded || kaneoGuide.expired ? 'red' : 'orange'}
+                data-testid='kaneo-context-badge'
+              >
+                {kaneoGuide.activeContextDegraded
+                  ? t('guid.kaneoContextDegraded')
+                  : kaneoGuide.expired
+                    ? t('guid.kaneoKeyExpired')
+                    : t('guid.kaneoKeyExpiringSoon')}
+              </Tag>
+              {(kaneoGuide.activeContextDegraded || kaneoGuide.expired) && (
+                <span className='ms-6px text-12px text-t-tertiary'>{t('guid.kaneoReconnectHint')}</span>
+              )}
+            </div>
+          ) : null}
 
           {selectedAssistantPrompts.length > 0 ? (
             <div className='mt-18px w-full animate-fade-in ps-20px'>
