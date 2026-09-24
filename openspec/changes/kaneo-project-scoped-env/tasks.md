@@ -35,12 +35,16 @@ Implementation is split so each group lands independently revertible. Group 1 tr
 - [x] 4.3 401/403 KaneoConnectionError in the import modal connect flow → mark stored contexts for the instance degraded; successful sync clears it (upsert refreshes from the manifest)
 - [x] 4.4 DOM tests `tests/unit/renderer/useKaneoGuideContext.dom.test.ts` (11 cases: matching, preselection/override, degraded/expiry states, degraded marking)
 
-## 5. Credential storage (main process + preload)
+## 5. Credential storage (AionCore backend, AES-256-GCM at rest)
 
-- [ ] 5.1 Implement `kaneoCredentials.*` IPC bridge: store (safeStorage-encrypted, 0600 file), rotate, delete, resolve-by-ref; typed payloads, no key material in renderer-bound responses
-- [ ] 5.2 Handle `safeStorage` unavailability: memory-only session key or explicit plaintext opt-in with warning (never silent plaintext)
-- [ ] 5.3 Wire the import modal save/rotate flows through the bridge; renderer discards plaintext on modal close
-- [ ] 5.4 Unit tests for the bridge (mock safeStorage) + integration test that no renderer-readable store contains plaintext
+> Architecture note: the renderer talks to the AionCore backend over HTTP
+> (port 25808), so storage lives server-side with the existing
+> `encryption_key` root (same as provider keys), not Electron safeStorage.
+
+- [x] 5.1 AionCore `KaneoCredentialService`: encrypted store/rotate/delete/list/resolve keyed by `kaneo-credential:<contextId>` in `client_preferences`; HTTP routes `GET/PUT/DELETE /api/kaneo-credentials[/{contextId}]`; responses carry metadata only, never key material; reserved-prefix guard on the generic preferences API
+- [x] 5.2 Encrypted-at-rest guarantee: `aionui_common::encrypt_string` (AES-256-GCM) with `derive_encryption_key` root; plaintext exists only in the one-shot PUT body and the server-side `resolve()` path (session MCP env injection)
+- [ ] 5.3 AionUi renderer wiring: `ipcBridge.kaneoCredentials` namespace (http wrappers); import modal saves plaintext via PUT on successful sync and discards it on modal close; context stores `keyExpiresAt`
+- [x] 5.4 Tests: 10 unit tests (encryption at rest, rotation in place, metadata shape, validation, resolve roundtrip) + 8 HTTP integration tests (metadata-only reads, 404/400 paths, list filtering, reserved-prefix rejection)
 
 ## 6. Session tooling (MCP injection)
 
