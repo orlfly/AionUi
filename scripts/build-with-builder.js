@@ -908,6 +908,30 @@ try {
     }
   }
 
+  // Post-build sanity check for Linux deb: the main executable MUST be named
+  // after `executableName` (AionUi), not the electron bootstrap name. Earlier
+  // builds produced a deb whose data layer contained `electron` instead of
+  // `AionUi`, which broke `update-alternatives` during dpkg install.
+  if (builderArgs.includes('--linux') || builderArgs.includes('--all')) {
+    const { spawnSync: verifySpawn } = require('child_process');
+    const debPathCandidates = [
+      path.resolve(__dirname, '../out', `AionUi-${JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8')).version}-linux-${targetArch === 'arm64' ? 'arm64' : 'amd64'}.deb`),
+    ];
+    for (const debPath of debPathCandidates) {
+      if (!fs.existsSync(debPath)) continue;
+      const check = verifySpawn('dpkg-deb', ['-c', debPath], { encoding: 'utf8' });
+      if (check.status !== 0) continue; // dpkg-deb may not be available on non-Linux hosts
+      const listing = check.stdout || '';
+      const hasMainExecutable = listing.split(/\r?\n/).some((l) => l.trimEnd().endsWith('/opt/AionUi/AionUi'));
+      if (!hasMainExecutable) {
+        throw new Error(
+          `Linux deb verification failed: ${debPath} does not contain /opt/AionUi/AionUi (main executable was NOT renamed from electron). rebuilt deb is invalid.`
+        );
+      }
+      console.log('✅ Deb verification passed: main executable /opt/AionUi/AionUi present');
+    }
+  }
+
   console.log('✅ Build completed!');
 } catch (error) {
   buildFailed = true;
