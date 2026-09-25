@@ -15,7 +15,7 @@ Implementation is split so each group lands independently revertible. Group 1 tr
 - [x] 2.2 Replace `kaneo.activeRole` with `kaneo.contexts[]` + `activeContextId` in `configKeys.ts`; add one-time migration from `kaneo.activeRole` to a project-less context (dual-read window during rollout)
 - [x] 2.3 Generalize `filterAssistantsForActiveKaneoRole` to context-based filtering (hide other roles in the active project, keep other projects' Kaneo assistants and non-Kaneo assistants visible)
 - [x] 2.4 Unit tests: manifest parsing/fallback, version tolerance, migration, filtering (multi-project scenario)
-- [ ] 2.5 Run i18n pipeline (`bun run i18n:types`, `node scripts/check-i18n.js`) after adding keys for all new user-facing strings
+- [x] 2.5 Run i18n pipeline (`bun run i18n:types`, `node scripts/check-i18n.js`) after adding keys for all new user-facing strings
 
 ## 3. Sync upgrades: naming, rules segment, workspace
 
