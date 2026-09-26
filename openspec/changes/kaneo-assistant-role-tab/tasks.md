@@ -31,6 +31,6 @@
 
 ## 5. Validation
 
-- [ ] 5.1 Manual flow: create assistant → Kaneo tab → connect → pick role + project → Create → assistant appears with workspace, session MCP server `kaneo:<contextId>` env-ref resolves in a live conversation
-- [ ] 5.2 Confirm home page no longer shows the import button; edit existing (role, project) instance updates in place
-- [ ] 5.3 AionCore backend accepts non-ASCII (Unicode) Kaneo project slugs: workspace allocation succeeds for a project whose auto-generated slug is non-ASCII (fix shipped in AionCore `kaneo-segment-unicode`), unit tests cover ASCII passthrough and Unicode folding
+- [x] 5.1 Manual flow: create assistant → Kaneo tab → connect → pick role + project → Create → assistant appears with workspace, session MCP server `kaneo:<contextId>` env-ref resolves in a live conversation
+- [x] 5.2 Confirm home page no longer shows the import button; edit existing (role, project) instance updates in place
+- [x] 5.3 AionCore backend accepts non-ASCII (Unicode) Kaneo project slugs: workspace allocation succeeds for a project whose auto-generated slug is non-ASCII (fix shipped in AionCore `kaneo-segment-unicode`), unit tests cover ASCII passthrough and Unicode folding
