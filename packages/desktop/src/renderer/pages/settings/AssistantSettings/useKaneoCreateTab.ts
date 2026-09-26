@@ -165,13 +165,21 @@ export function useKaneoCreateTab(options: {
   // Project list after connect: one key may belong to multiple teams, so
   // each team contributes its (archived-filtered) projects. Failures degrade
   // to an empty picker with a warning; selector falls back to manual slug.
+  // The key is read from secretRef, not the apiKey state, so that the
+  // post-create secret release (setApiKey('')) does not recreate this
+  // callback and re-trigger the connected-effect with an empty key.
   const loadTeamsAndProjects = useCallback(async () => {
+    // secretRef only: reading the apiKey state here would recreate this
+    // callback when the post-create release clears the key, re-triggering
+    // the connected-effect below with an empty key (a spurious 401 after
+    // a successful create).
+    const keyNow = secretRef.current;
     setTeamsLoading(true);
     setProjectsError(null);
     try {
-      const teams = await fetchKaneoTeams(baseUrl, apiKey);
+      const teams = await fetchKaneoTeams(baseUrl, keyNow);
       const projectLists = await Promise.all(
-        teams.map((team) => fetchKaneoProjects(baseUrl, apiKey, team.id).catch((): KaneoProjectSummary[] => []))
+        teams.map((team) => fetchKaneoProjects(baseUrl, keyNow, team.id).catch((): KaneoProjectSummary[] => []))
       );
       const merged = projectLists.flat();
       const seen = new Set<string>();
@@ -190,7 +198,7 @@ export function useKaneoCreateTab(options: {
     } finally {
       setTeamsLoading(false);
     }
-  }, [baseUrl, manifest, apiKey]);
+  }, [baseUrl, manifest]);
 
   useEffect(() => {
     if (!connected) return;

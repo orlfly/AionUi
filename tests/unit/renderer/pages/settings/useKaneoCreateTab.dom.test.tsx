@@ -333,6 +333,35 @@ describe('useKaneoCreateTab', () => {
     expect(hook.result.current.lastResult?.status).toBe('created');
   });
 
+  it('does not re-fire the project load with an empty key after a successful create', async () => {
+    const teamCalls: string[] = [];
+    const previousFetch = globalThis.fetch;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const auth = String(new Headers(init?.headers).get('Authorization') ?? '');
+      if (url.includes('/api/team')) {
+        teamCalls.push(auth);
+        if (auth !== 'Bearer k-key') {
+          return new Response('unauthorized', { status: 401 });
+        }
+        return new Response(JSON.stringify({ success: true, data: [{ id: 'team-1' }] }), { status: 200 });
+      }
+      return previousFetch(input, init);
+    }) as unknown as typeof fetch);
+    const hook = renderHook(() => useKaneoCreateTab({ existing: [] }));
+    await connectVia(hook);
+    await waitFor(() => expect(hook.result.current.projects.length).toBeGreaterThan(0));
+    act(() => hook.result.current.selectProject('proj-1'));
+
+    await act(async () => {
+      await hook.result.current.create();
+    });
+    expect(hook.result.current.lastResult?.status).toBe('created');
+    // Allow any post-create effect flush: no further (empty-key) team call.
+    await act(async () => {});
+    expect(teamCalls.every((auth) => auth === 'Bearer k-key')).toBe(true);
+  });
+
   it('releaseSecrets clears the key without any PUT when the tab closes', async () => {
     const hook = renderHook(() => useKaneoCreateTab({ existing: [] }));
     hook.result.current.setApiKey('dirty-key');
