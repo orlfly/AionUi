@@ -117,7 +117,11 @@ const PromptsSection: React.FC<PromptsSectionProps> = ({
                         </div>
                       ) : (
                         <div className='flex items-center gap-12px'>
-                          <div className='flex h-36px flex-1 items-center px-4px text-13px font-500 leading-18px text-t-primary'>
+                          <div
+                            className='min-w-0 flex-1 truncate px-4px text-13px font-500 leading-18px text-t-primary'
+                            title={prompt}
+                            data-testid={`text-assistant-recommended-prompt-${index}`}
+                          >
                             {prompt}
                           </div>
                           {isPromptEditable ? (
