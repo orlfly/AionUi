@@ -21,6 +21,7 @@ import { Message } from '@arco-design/web-react';
 import { ipcBridge } from '@/common';
 import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
 import { useKaneoCreateTab } from './useKaneoCreateTab';
+import { getKaneoContexts } from '@/renderer/services/kaneo/kaneoContexts';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './assistantUtils';
 import AssistantEditorPage from './AssistantEditorPage';
@@ -123,6 +124,11 @@ const AssistantSettings: React.FC = () => {
   );
 
   const editAvatarImage = editor.editAvatarPreview || resolveAvatarImageSrc(editor.editAvatar);
+  // Kaneo-backed detection: the (role, project) contexts record assistant ids.
+  const activeAssistantIdIsKaneo = useMemo(() => {
+    if (!activeAssistantId) return false;
+    return getKaneoContexts().some((context) => context.assistantId === activeAssistantId);
+  }, [activeAssistantId, assistants]);
   const hasConsumedNavigationIntentRef = useRef(false);
   const showEditor = editor.editVisible && (editor.isCreating || activeAssistantId !== null);
   const editorViewModel: AssistantEditorViewModel = {
@@ -200,9 +206,13 @@ const AssistantSettings: React.FC = () => {
       requestDelete: editor.handleDeleteClick,
       duplicate: (assistant) => void editor.handleDuplicate(assistant),
     },
-    // The Kaneo tab is mounted only in the create wizard; edit mode for a
-    // non-Kaneo assistant has no Kaneo binding flow at this stage.
-    kaneo: editor.isCreating ? kaneoCreateTab : undefined,
+    // The Kaneo tab is mounted in the create wizard AND in edit mode for
+    // non-Kaneo assistants (spec: "Tab not offered when editing non-Kaneo
+    // assistant" requires the tab stays visible for creating new bindings
+    // while the editor keeps the current assistant's data intact). Edit mode
+    // for a Kaneo-backed instance hides it because that instance's binding is
+    // managed in place via the credential/workspace flows.
+    kaneo: editor.isCreating || !activeAssistantIdIsKaneo ? kaneoCreateTab : undefined,
   };
 
   useEffect(() => {
