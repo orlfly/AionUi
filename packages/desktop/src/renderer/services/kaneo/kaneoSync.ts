@@ -35,7 +35,14 @@ import {
   skillsForRoleFromTemplates,
 } from './kaneoClient';
 import { type KaneoEnvironmentManifest, isManifestVersionNewer, primaryRepository } from './kaneoManifest';
-import { type KaneoContext, contextFromManifest, updateKaneoContext, upsertKaneoContext } from './kaneoContexts';
+import {
+  type KaneoContext,
+  contextFromManifest,
+  getKaneoContexts,
+  newKaneoContextId,
+  updateKaneoContext,
+  upsertKaneoContext,
+} from './kaneoContexts';
 import type { IMcpServer } from '@/common/config/storage';
 
 export const KANEO_ASSISTANT_NAME_PREFIX = 'Kaneo · ';
@@ -740,6 +747,148 @@ async function writeAssistantRule(assistantId: string, content: string): Promise
   if (content.trim()) {
     await ipcBridge.fs.writeAssistantRule.invoke({ assistant_id: assistantId, content });
   }
+}
+
+export type KaneoExplicitBindingResult = {
+  /** Created or updated assistant instance for the (role, project) pair. */
+  status: 'created' | 'updated';
+  assistantId: string;
+  contextId: string;
+  workspace: string;
+  /** True when an existing (role, project) context was reused (rotation). */
+  reusedExisting: boolean;
+};
+
+/** Options for the explicit (role, project) binding sync from the create tab. */
+export type KaneoExplicitBindingOptions = {
+  baseUrl: string;
+  /** The instance's project the role is bound to (from the tab picker). */
+  project: { id: string; name: string; slug: string };
+  role: string;
+  /** Role AGENTS.md content from the config package. */
+  agentsMd: string;
+  /** Description for the assistant (from templates). */
+  description: string;
+  /** Skill ids enabled for this role (already imported). */
+  enabledSkills: string[];
+  /** Current assistants for in-place update detection. */
+  existing: Assistant[];
+};
+
+/**
+ * Create-or-update one assistant instance for an explicitly chosen
+ * (role, project) pair from the Kaneo create tab.
+ *
+ * Unlike the manifest sync this does not require a bootstrap manifest:
+ * real Kaneo instances expose roles via `/api/agent/agents-config/*` and
+ * projects via `/api/team` + `/api/project?teamId=...`, so the user binds
+ * a role to a chosen project in the UI. The created context follows the
+ * same upsert semantics as manifest sync (never duplicates a binding),
+ * allocates the per-project per-role workspace, and writes role rules
+ * without the project environment segment (no manifest is available).
+ */
+export async function syncKaneoAssistantForBinding(
+  options: KaneoExplicitBindingOptions
+): Promise<KaneoExplicitBindingResult> {
+  const { baseUrl, project, role, agentsMd, description, enabledSkills, existing } = options;
+  if (!agentsMd.trim()) {
+    throw new Error(`Role "${role}" has no AGENTS.md in the Kaneo config package`);
+  }
+  const trimmedBase = baseUrl.trim().replace(/\/+$/, '');
+  const workspace = await allocateKaneoWorkspace(project.slug, role);
+  const name = kaneoProjectAssistantName(project.name, role);
+  const rolePrompt = buildClaimPrompt(role, trimmedBase);
+
+  let defaultAgentId: string | undefined;
+  try {
+    const managedAgents = await ipcBridge.acpConversation.getManagedAgents.invoke();
+    defaultAgentId = managedAgents.find((a: { id: string }) => Boolean(a.id))?.id;
+  } catch {
+    defaultAgentId = undefined;
+  }
+
+  // Match a previous instance first by its stored context, then by name so a
+  // fresh import cannot collide with an old naming.
+  const previousContext = getKaneoContexts().find(
+    (c) => c.baseUrl === trimmedBase && (c.projectId ?? null) === project.id && c.agentRole === role
+  );
+  const existingAssistant =
+    (previousContext?.assistantId && existing.find((a) => a.id === previousContext.assistantId)) ||
+    existing.find((a) => a.name === name);
+
+  const createAssistant = async () => {
+    const created = await ipcBridge.assistants.create.invoke({
+      name,
+      description,
+      agent_id: defaultAgentId,
+      custom_skill_names: enabledSkills,
+      prompts: [rolePrompt],
+    });
+    await writeAssistantRule(created.id, agentsMd);
+    return created;
+  };
+
+  let assistantId: string;
+  let status: 'created' | 'updated';
+  if (existingAssistant) {
+    try {
+      await ipcBridge.assistants.update.invoke({
+        id: existingAssistant.id,
+        name,
+        description,
+        custom_skill_names: enabledSkills,
+        recommended_prompts: [rolePrompt],
+      });
+      await writeAssistantRule(existingAssistant.id, agentsMd);
+      assistantId = existingAssistant.id;
+      status = 'updated';
+    } catch (updateError) {
+      const message = updateError instanceof Error ? updateError.message : String(updateError);
+      if (/not found|NOT_FOUND/i.test(message)) {
+        const created = await createAssistant();
+        assistantId = created.id;
+        status = 'created';
+      } else {
+        throw updateError;
+      }
+    }
+  } else {
+    const created = await createAssistant();
+    assistantId = created.id;
+    status = 'created';
+  }
+
+  // Gateway context: stable identity for credentials + session MCP env-ref.
+  const baseContext: KaneoContext = previousContext ?? {
+    id: newKaneoContextId(),
+    baseUrl: trimmedBase,
+    agentRole: role,
+    projectId: project.id,
+    projectName: project.name,
+    projectSlug: project.slug,
+    workspace: null,
+    assistantId: null,
+    manifestSummary: null,
+    keyExpiresAt: null,
+    degraded: false,
+    degradedReason: null,
+  };
+  const { context, created: createdContext } = await upsertKaneoContext({
+    ...baseContext,
+    assistantId,
+    workspace,
+  });
+  if (createdContext || context.assistantId !== assistantId) {
+    await updateKaneoContext(context.id, { assistantId, workspace });
+  }
+
+  return {
+    status,
+    assistantId,
+    contextId: context.id,
+    workspace,
+    reusedExisting: !createdContext,
+  };
 }
 
 export { skillsForRoleFromTemplates };

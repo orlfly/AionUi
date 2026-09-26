@@ -238,3 +238,64 @@ export function skillAppliesToRole(forRoles: string[] | null, role: string): boo
 export function skillsForRoleFromTemplates(templates: KaneoTemplates, role: string): string[] {
   return templates.skills.filter((skill) => skillAppliesToRole(skill.forRoles, role)).map((skill) => skill.name);
 }
+
+/** A Kaneo team/workspace, from `GET /api/team` with an API key. */
+export type KaneoTeam = {
+  id: string;
+  name: string;
+};
+
+/** A Kaneo project, from `GET /api/project?teamId=...` with an API key. */
+export type KaneoProjectSummary = {
+  id: string;
+  teamId: string;
+  name: string;
+  slug: string;
+  description: string | null;
+};
+
+async function kaneoJsonFetch<T>(url: string, apiKey: string): Promise<T> {
+  const response = await kaneoFetch(url, apiKey);
+  if (!response.ok) {
+    throw new KaneoConnectionError('unknown', `Kaneo request failed: HTTP ${response.status} (${url})`);
+  }
+  const body: unknown = await response.json();
+  const data = (body as { data?: unknown } | null)?.data ?? body;
+  return data as T;
+}
+
+/**
+ * List the teams (workspaces) the key's user belongs to.
+ *
+ * Kaneo API keys resolve to a userId, so team listing works for agent keys
+ * the same way it does for the UI. Powers the Kaneo create-tab project
+ * picker; failures degrade to an empty list so the tab can still offer
+ * manual entry.
+ */
+export async function fetchKaneoTeams(baseUrl: string, apiKey: string): Promise<KaneoTeam[]> {
+  const base = normalizeKaneoBaseUrl(baseUrl);
+  const result = await kaneoJsonFetch<KaneoTeam[]>(`${base}/api/team`, apiKey);
+  if (!Array.isArray(result)) return [];
+  return result.filter((t): t is KaneoTeam => Boolean(t) && typeof (t as KaneoTeam).id === 'string');
+}
+
+/**
+ * List a team's projects for the create-tab project picker.
+ * Falls back to a per-request timeout so an unreachable instance cannot
+ * hang the connect flow; callers treat errors as an empty list.
+ */
+export async function fetchKaneoProjects(baseUrl: string, apiKey: string, teamId: string): Promise<KaneoProjectSummary[]> {
+  const base = normalizeKaneoBaseUrl(baseUrl);
+  const url = `${base}/api/project?teamId=${encodeURIComponent(teamId)}`;
+  const response = await kaneoFetch(url, apiKey);
+  if (!response.ok) {
+    throw new KaneoConnectionError('unknown', `Kaneo project list failed: HTTP ${response.status}`);
+  }
+  const body: unknown = await response.json();
+  const data = (body as { data?: unknown } | null)?.data ?? body;
+  if (!Array.isArray(data)) return [];
+  return data.filter(
+    (p): p is KaneoProjectSummary & { archivedAt?: string | null } =>
+      Boolean(p) && typeof (p as KaneoProjectSummary).id === 'string' && !(p as { archivedAt?: string | null }).archivedAt
+  );
+}

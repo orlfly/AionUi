@@ -32,6 +32,8 @@ export type ConfigKeyMap = {
   'kaneo.contexts': KaneoContext[] | undefined;
   /** Which Kaneo context is currently active in the Guide. */
   'kaneo.activeContextId': string | undefined;
+  /** Last Kaneo base URL used in the assistant-create Kaneo tab. */
+  'kaneo.lastBaseUrl': string | undefined;
   /** User-defined order for the enabled assistant picker surfaces. */
   'assistants.enabledOrder': string[] | undefined;
   'upload.saveToWorkspace': boolean | undefined;
