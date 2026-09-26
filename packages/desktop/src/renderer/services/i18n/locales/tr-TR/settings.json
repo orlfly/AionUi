@@ -1437,5 +1437,10 @@
   "kaneoCreateTab.createdNotice": "Asistan hazır: {{name}}",
   "kaneoCreateTab.roleRequired": "Bir ajan rolü seçin",
   "kaneoCreateTab.projectRequired": "Bir proje seçin",
-  "kaneoCreateTab.roleSelectedHint": "Bu asistana bağlandı"
+  "kaneoCreateTab.roleSelectedHint": "Bu asistana bağlandı",
+  "kaneoCreateTab.instancesTitle": "Asistan örnekleri",
+  "kaneoCreateTab.unboundRole": "Rol atanmadı",
+  "kaneoCreateTab.unboundProject": "Proje yok",
+  "kaneoInstance.workspaceSuffix": "Çalışma alanı: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "Çalışma alanı atanmadı"
 }

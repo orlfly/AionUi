@@ -8,22 +8,41 @@ import { Info } from '@icon-park/react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { KaneoCreateTabController } from './useKaneoCreateTab';
+import KaneoInstanceCard, { type KaneoInstanceEntry } from './home/KaneoInstanceCard';
 
 type AssistantKaneoCreateTabProps = {
   kaneo: KaneoCreateTabController;
-  /** Called after the assistant was created so the wizard can enter edit mode. */
+  /** Called after the assistant was created so the host page can refresh. */
   onCreated?: (assistantId: string) => void;
+  /** Existing (role, project) assistant instances, listed under their role cards. */
+  instances?: KaneoInstanceEntry[];
+  /** Instance-level actions (home page hosting). */
+  onOpenInstance?: (assistantId: string) => void;
+  onToggleInstance?: (assistantId: string, checked: boolean) => void;
+  onStartInstanceChat?: (assistantId: string) => void;
+  localeKey?: string;
 };
 
 /**
- * Kaneo tab for the assistant creation UI (openspec/changes/kaneo-assistant-role-tab).
+ * Kaneo tab (openspec/changes/kaneo-assistant-role-tab), hosted as a tab on
+ * the assistants home page. Shows the existing (role, project) assistant
+ * instances grouped under their agent role cards, the connect form, and the
+ * explicit role+project creation flow.
  *
  * Requires an explicit (role, project) selection before Create is enabled.
  * Role-scoped keys lock the role grid to their bound role; other roles render
  * as unavailable. The plaintext API key never leaves component state and is
  * handed to the backend exactly once (one-shot PUT) before being dropped.
  */
-const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({ kaneo, onCreated }) => {
+const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
+  kaneo,
+  onCreated,
+  instances = [],
+  onOpenInstance,
+  onToggleInstance,
+  onStartInstanceChat,
+  localeKey = 'en',
+}) => {
   const { t } = useTranslation();
 
   const lastResult = kaneo.lastResult;
@@ -44,6 +63,40 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({ kaneo
 
   const hasRoles = kaneo.roles.length > 0;
 
+  // Existing instances grouped under their agent role card. Instances whose
+  // role no longer appears in the current listing (disconnected, legacy) still
+  // surface in a trailing "other instances" group so nothing disappears.
+  const instancesByRole = useMemo(() => {
+    const grouped = new Map<string, KaneoInstanceEntry[]>();
+    for (const instance of instances) {
+      const key =
+        instance.context.agentRole || t('settings.kaneoCreateTab.unboundRole', { defaultValue: 'Unassigned role' });
+      const bucket = grouped.get(key) ?? [];
+      bucket.push(instance);
+      grouped.set(key, bucket);
+    }
+    return grouped;
+  }, [instances, t]);
+
+  const renderInstancesForRole = (role: string) => {
+    const roleInstances = instancesByRole.get(role) ?? [];
+    if (roleInstances.length === 0) return null;
+    return (
+      <div className='mt-6px flex flex-col gap-6px' data-testid={`kaneo-role-instances-${role}`}>
+        {roleInstances.map((instance) => (
+          <KaneoInstanceCard
+            key={instance.assistant.id}
+            instance={instance}
+            localeKey={localeKey}
+            onOpenDetail={(assistant) => onOpenInstance?.(assistant.id)}
+            onToggleEnabled={(assistant, checked) => onToggleInstance?.(assistant.id, checked)}
+            onStartChat={(assistant) => onStartInstanceChat?.(assistant.id)}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div
       data-testid='assistant-card-kaneo'
@@ -57,6 +110,28 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({ kaneo
 
       {kaneo.phase !== 'connected' ? (
         <div className='flex flex-col gap-10px'>
+          {instances.length > 0 && (
+            <div className='flex flex-col gap-8px' data-testid='kaneo-instances-unconnected'>
+              <div className='text-13px font-500 text-t-secondary'>
+                {t('settings.kaneoCreateTab.instancesTitle', { defaultValue: 'Assistant instances' })}
+              </div>
+              {[...instancesByRole.entries()].map(([role, roleInstances]) => (
+                <div key={role}>
+                  <div className='mb-4px text-11px font-600 text-t-tertiary'>{role}</div>
+                  {roleInstances.map((instance) => (
+                    <KaneoInstanceCard
+                      key={instance.assistant.id}
+                      instance={instance}
+                      localeKey={localeKey}
+                      onOpenDetail={(assistant) => onOpenInstance?.(assistant.id)}
+                      onToggleEnabled={(assistant, checked) => onToggleInstance?.(assistant.id, checked)}
+                      onStartChat={(assistant) => onStartInstanceChat?.(assistant.id)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
           <Input
             value={kaneo.baseUrl}
             onChange={kaneo.setBaseUrl}
@@ -112,7 +187,7 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({ kaneo
             {!hasRoles ? (
               <Alert type='warning' content={t('settings.kaneoRoleMissing')} />
             ) : (
-              <div className='grid grid-cols-2 gap-8px md:grid-cols-3'>
+              <div className='flex flex-col gap-10px'>
                 {kaneo.roles.map((role) => {
                   const selected = kaneo.selectedRole === role.name;
                   const baseClass = 'rounded-10px border px-10px py-8px transition-colors';
@@ -121,25 +196,22 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({ kaneo
                     : selected
                       ? 'border-primary bg-fill-0'
                       : 'border-border-2 bg-2 hover:bg-fill-1';
-                  if (!role.selectable) {
-                    return (
-                      <div
-                        key={role.name}
-                        data-testid={`grid-kaneo-create-role-${role.name}`}
-                        data-unavailable='true'
-                        className={`${baseClass} ${stateClass}`}
-                      >
-                        <div className='text-13px font-500 text-t-primary'>{role.name}</div>
-                        {role.description && (
-                          <div className='mt-2px line-clamp-2 text-11px text-t-tertiary'>{role.description}</div>
-                        )}
-                        <div className='mt-4px text-10px text-warning-8'>
-                          {t('settings.kaneoCreateTab.roleUnavailableHint')}
-                        </div>
+                  const roleCard = !role.selectable ? (
+                    <div
+                      key={role.name}
+                      data-testid={`grid-kaneo-create-role-${role.name}`}
+                      data-unavailable='true'
+                      className={`${baseClass} ${stateClass}`}
+                    >
+                      <div className='text-13px font-500 text-t-primary'>{role.name}</div>
+                      {role.description && (
+                        <div className='mt-2px line-clamp-2 text-11px text-t-tertiary'>{role.description}</div>
+                      )}
+                      <div className='mt-4px text-10px text-warning-8'>
+                        {t('settings.kaneoCreateTab.roleUnavailableHint')}
                       </div>
-                    );
-                  }
-                  return (
+                    </div>
+                  ) : (
                     <span
                       key={role.name}
                       role='button'
@@ -167,6 +239,13 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({ kaneo
                         </div>
                       )}
                     </span>
+                  );
+                  // Role card with its assistant instances listed underneath.
+                  return (
+                    <div key={`kaneo-role-block-${role.name}`} className='flex flex-col'>
+                      {roleCard}
+                      {renderInstancesForRole(role.name)}
+                    </div>
                   );
                 })}
               </div>

@@ -18,10 +18,9 @@
  * read-only so users can inspect what's bundled.
  */
 import { Message } from '@arco-design/web-react';
-import { ipcBridge } from '@/common';
 import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
 import { useKaneoCreateTab } from './useKaneoCreateTab';
-import { getKaneoContexts } from '@/renderer/services/kaneo/kaneoContexts';
+import { getKaneoContexts, type KaneoContext } from '@/renderer/services/kaneo/kaneoContexts';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './assistantUtils';
 import AssistantEditorPage from './AssistantEditorPage';
@@ -48,7 +47,7 @@ const AssistantSettings: React.FC = () => {
 
   // Keep the current management surface when returning from the editor. The
   // unified Enabled tab is the default entry point for assistant ordering.
-  const [homeTab, setHomeTab] = React.useState<'enabled' | 'mine' | 'official'>('enabled');
+  const [homeTab, setHomeTab] = React.useState<'enabled' | 'mine' | 'official' | 'kaneo'>('enabled');
   // "Chat" on an assistant → open a new conversation with it preselected.
   const handleStartChat = useCallback(
     (assistant: AssistantListItem) => {
@@ -100,22 +99,14 @@ const AssistantSettings: React.FC = () => {
     message,
   });
 
-  // Kaneo create tab: handled inside the create wizard. After a successful
-  // (role, project) binding the catalog refreshes and the editor switches to
-  // the new instance in edit mode.
+  // Kaneo home tab controller: after a successful (role, project) binding
+  // the assistant list refreshes so the instance shows under its role card.
   const kaneoCreateTab = useKaneoCreateTab({
     existing: assistants,
-    onCreated: (assistantId) => {
-      void (async () => {
-        await loadAssistants();
-        try {
-          const refreshed = await ipcBridge.assistants.list.invoke();
-          const target = refreshed.find((assistant) => assistant.id === assistantId);
-          if (target) void editor.handleEdit(target);
-        } catch {
-          // The new instance stays in the list; the user can open it manually.
-        }
-      })();
+    onCreated: () => {
+      // The home page stays visible: refresh the list so the new instance
+      // shows up under its role card immediately.
+      void loadAssistants();
     },
   });
   const availableBackends = useMemo(
@@ -124,11 +115,17 @@ const AssistantSettings: React.FC = () => {
   );
 
   const editAvatarImage = editor.editAvatarPreview || resolveAvatarImageSrc(editor.editAvatar);
-  // Kaneo-backed detection: the (role, project) contexts record assistant ids.
-  const activeAssistantIdIsKaneo = useMemo(() => {
-    if (!activeAssistantId) return false;
-    return getKaneoContexts().some((context) => context.assistantId === activeAssistantId);
-  }, [activeAssistantId, assistants]);
+  // Kaneo-backed assistant instances: the (role, project) contexts record
+  // assistant ids; the home page's Kaneo tab groups them under their roles.
+  const kaneoInstances = useMemo(() => {
+    const byAssistantId = new Map<string, KaneoContext>();
+    for (const context of getKaneoContexts()) {
+      if (context.assistantId) byAssistantId.set(context.assistantId, context);
+    }
+    return assistants
+      .filter((assistant) => byAssistantId.has(assistant.id))
+      .map((assistant) => ({ assistant, context: byAssistantId.get(assistant.id)! }));
+  }, [assistants]);
   const hasConsumedNavigationIntentRef = useRef(false);
   const showEditor = editor.editVisible && (editor.isCreating || activeAssistantId !== null);
   const editorViewModel: AssistantEditorViewModel = {
@@ -206,13 +203,6 @@ const AssistantSettings: React.FC = () => {
       requestDelete: editor.handleDeleteClick,
       duplicate: (assistant) => void editor.handleDuplicate(assistant),
     },
-    // The Kaneo tab is mounted in the create wizard AND in edit mode for
-    // non-Kaneo assistants (spec: "Tab not offered when editing non-Kaneo
-    // assistant" requires the tab stays visible for creating new bindings
-    // while the editor keeps the current assistant's data intact). Edit mode
-    // for a Kaneo-backed instance hides it because that instance's binding is
-    // managed in place via the credential/workspace flows.
-    kaneo: editor.isCreating || !activeAssistantIdIsKaneo ? kaneoCreateTab : undefined,
   };
 
   useEffect(() => {
@@ -267,6 +257,8 @@ const AssistantSettings: React.FC = () => {
               localeKey={localeKey}
               initialTab={homeTab}
               onTabChange={setHomeTab}
+              kaneo={kaneoCreateTab}
+              kaneoInstances={kaneoInstances}
               onOpenDetail={(assistant) => {
                 setActiveAssistantId(assistant.id);
                 void editor.handleEdit(assistant);

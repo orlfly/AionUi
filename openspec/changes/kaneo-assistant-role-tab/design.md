@@ -2,7 +2,7 @@
 
 ## Context
 
-`kaneo-project-scoped-env` (archived) already ships: project-bound contexts (`kaneo.contexts[]` + `activeContextId`), manifest-driven sync with per-project workspaces, MCP-first claim prompt with `kaneo:<contextId>` env-ref sentinels, and the AionCore encrypted credential API (`PUT/GET/DELETE /api/kaneo-credentials/{contextId}`). The remaining friction is UX: assistants get created through a detached "Import from Kaneo" modal (`KaneoImportModal.tsx`) with a separate button on the assistants home page.
+`kaneo-project-scoped-env` (archived) already ships: project-bound contexts (`kaneo.contexts[]` + `activeContextId`), manifest-driven sync with per-project workspaces, MCP-first claim prompt with `kaneo:<contextId>` env-ref sentinels, and the AionCore encrypted credential API (`PUT/GET/DELETE /api/kaneo-credentials/{contextId}`). The remaining friction is UX: assistants get created through a detached "Import from Kaneo" modal (`KaneoImportModal.tsx`) with a separate button on the assistants home page, and the manual create wizard is an unrelated flow.
 
 ## Goals / Non-Goals
 
@@ -11,9 +11,9 @@
 
 ## Decisions
 
-### D1. Reuse the editor, add a Kaneo section/tab
+### D1. Assistants home page hosts the Kaneo tab
 
-`AssistantEditorPage` already renders `AssistantEditorSections` with a shared view model (name, emoji, description, prompt, skills). The Kaneo tab is added as a section visible in **create mode** (and as a "connect Kaneo" affordance in edit mode for non-Kaneo assistants). It reuses `AssistantEditorViewModel` state so Create saves the same assistant record.
+`AssistantHomeTabs` already hosts the enabled / mine / official tabs with a shared `SettingsPageHeader` tab strip. The Kaneo tab is added there as a fourth home tab, so the manual creation wizard stays unchanged. The tab is self-contained: it mounts its own `useKaneoCreateTab` controller fed by the home page's assistant list and refreshes the list after a create, so instances appear immediately under their role cards.
 
 ### D2. Importance ordering of tab content
 

@@ -22,7 +22,6 @@ import IdentitySection from './editor/IdentitySection';
 import PromptsSection from './editor/PromptsSection';
 import DefaultsSection from './editor/DefaultsSection';
 import RulesSection from './editor/RulesSection';
-import AssistantKaneoCreateTab from './AssistantKaneoCreateTab';
 
 export type AssistantEditorSectionsProps = {
   editor: AssistantEditorViewModel;
@@ -43,7 +42,7 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   const [skillsPopupVisible, setSkillsPopupVisible] = useState(false);
   const [mcpPopupVisible, setMcpPopupVisible] = useState(false);
 
-  const { isCreating, profile, agent, prompts, defaults, rules, skills, actions, kaneo } = editor;
+  const { isCreating, profile, agent, prompts, defaults, rules, skills, actions } = editor;
   const editName = profile.name;
   const setEditName = profile.setName;
   const editDescription = profile.description;
@@ -412,8 +411,6 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
         renderAvatarPreview={renderAvatarPreview}
         readOnlyLabel={readOnlyLabel}
       />
-
-      {kaneo && <AssistantKaneoCreateTab kaneo={kaneo} />}
 
       <PromptsSection
         isReadOnly={isReadOnlyAssistant}

@@ -1437,5 +1437,10 @@
   "kaneoCreateTab.createdNotice": "Assistant ready: {{name}}",
   "kaneoCreateTab.roleRequired": "Select an agent role",
   "kaneoCreateTab.projectRequired": "Select a project",
-  "kaneoCreateTab.roleSelectedHint": "Bound to this assistant"
+  "kaneoCreateTab.roleSelectedHint": "Bound to this assistant",
+  "kaneoCreateTab.instancesTitle": "Assistant instances",
+  "kaneoCreateTab.unboundRole": "Unassigned role",
+  "kaneoCreateTab.unboundProject": "No project",
+  "kaneoInstance.workspaceSuffix": "Workspace: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "Workspace not allocated"
 }

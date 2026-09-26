@@ -4,7 +4,7 @@
 
 ### Requirement: Per-project per-role workspace allocation
 
-For every project-bound Kaneo context, the sync flow (triggered from the assistant creation UI's Kaneo tab or from reconnection/rotation in place) SHALL allocate a dedicated workspace directory at `<userData>/kaneo-workspaces/<projectSlug>/<role>/`, creating it (recursively) on sync if missing, and SHALL record the absolute path in the Kaneo context. The allocation entry point is the Kaneo tab (see `kaneo-assistant-create-tab`), not the retired standalone import modal.
+For every project-bound Kaneo context, the sync flow (triggered from the assistants home page's Kaneo tab or from reconnection/rotation in place) SHALL allocate a dedicated workspace directory at `<userData>/kaneo-workspaces/<projectSlug>/<role>/`, creating it (recursively) on sync if missing, and SHALL record the absolute path in the Kaneo context. The allocation entry point is the Kaneo tab (see `kaneo-assistant-create-tab`), not the retired standalone import modal.
 
 #### Scenario: First sync from the Kaneo tab
 

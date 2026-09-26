@@ -1439,5 +1439,10 @@
   "kaneoCreateTab.createdNotice": "助手已就緒：{{name}}",
   "kaneoCreateTab.roleRequired": "請選擇 agent 角色",
   "kaneoCreateTab.projectRequired": "請選擇專案",
-  "kaneoCreateTab.roleSelectedHint": "已綁到此助手"
+  "kaneoCreateTab.roleSelectedHint": "已綁到此助手",
+  "kaneoCreateTab.instancesTitle": "助手實例",
+  "kaneoCreateTab.unboundRole": "未分配角色",
+  "kaneoCreateTab.unboundProject": "未綁定專案",
+  "kaneoInstance.workspaceSuffix": "工作區：{{workspace}}",
+  "kaneoInstance.workspaceMissing": "工作區未分配"
 }

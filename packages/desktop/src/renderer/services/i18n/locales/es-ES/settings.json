@@ -1437,5 +1437,10 @@
   "kaneoCreateTab.createdNotice": "Asistente listo: {{name}}",
   "kaneoCreateTab.roleRequired": "Selecciona un rol de agente",
   "kaneoCreateTab.projectRequired": "Selecciona un proyecto",
-  "kaneoCreateTab.roleSelectedHint": "Vinculado a este asistente"
+  "kaneoCreateTab.roleSelectedHint": "Vinculado a este asistente",
+  "kaneoCreateTab.instancesTitle": "Instancias de asistentes",
+  "kaneoCreateTab.unboundRole": "Sin rol asignado",
+  "kaneoCreateTab.unboundProject": "Sin proyecto",
+  "kaneoInstance.workspaceSuffix": "Espacio de trabajo: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "Espacio de trabajo sin asignar"
 }

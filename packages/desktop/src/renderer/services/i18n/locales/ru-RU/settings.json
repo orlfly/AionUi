@@ -1451,5 +1451,10 @@
   "kaneoCreateTab.createdNotice": "Помощник готов: {{name}}",
   "kaneoCreateTab.roleRequired": "Выберите роль агента",
   "kaneoCreateTab.projectRequired": "Выберите проект",
-  "kaneoCreateTab.roleSelectedHint": "Привязано к этому помощнику"
+  "kaneoCreateTab.roleSelectedHint": "Привязано к этому помощнику",
+  "kaneoCreateTab.instancesTitle": "Экземпляры помощников",
+  "kaneoCreateTab.unboundRole": "Роль не назначена",
+  "kaneoCreateTab.unboundProject": "Без проекта",
+  "kaneoInstance.workspaceSuffix": "Рабочее пространство: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "Рабочее пространство не выделено"
 }

@@ -1437,5 +1437,10 @@
   "kaneoCreateTab.createdNotice": "دستیار آماده است: {{name}}",
   "kaneoCreateTab.roleRequired": "یک نقش عامل انتخاب کنید",
   "kaneoCreateTab.projectRequired": "یک پروژه انتخاب کنید",
-  "kaneoCreateTab.roleSelectedHint": "به این دستیار متصل شده"
+  "kaneoCreateTab.roleSelectedHint": "به این دستیار متصل شده",
+  "kaneoCreateTab.instancesTitle": "نمونه‌های دستیار",
+  "kaneoCreateTab.unboundRole": "بدون نقش",
+  "kaneoCreateTab.unboundProject": "بدون پروژه",
+  "kaneoInstance.workspaceSuffix": "فضای کاری: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "فضای کاری اختصاص نیافته"
 }

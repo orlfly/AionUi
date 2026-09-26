@@ -1437,5 +1437,10 @@
   "kaneoCreateTab.createdNotice": "Assistent bereit: {{name}}",
   "kaneoCreateTab.roleRequired": "Agent-Rolle wählen",
   "kaneoCreateTab.projectRequired": "Projekt wählen",
-  "kaneoCreateTab.roleSelectedHint": "An diesen Assistenten gebunden"
+  "kaneoCreateTab.roleSelectedHint": "An diesen Assistenten gebunden",
+  "kaneoCreateTab.instancesTitle": "Assistenten-Instanzen",
+  "kaneoCreateTab.unboundRole": "Ohne Rolle",
+  "kaneoCreateTab.unboundProject": "Kein Projekt",
+  "kaneoInstance.workspaceSuffix": "Arbeitsbereich: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "Arbeitsbereich nicht zugewiesen"
 }

@@ -1439,5 +1439,10 @@
   "kaneoCreateTab.createdNotice": "アシスタント準備完了：{{name}}",
   "kaneoCreateTab.roleRequired": "エージェントロールを選択してください",
   "kaneoCreateTab.projectRequired": "プロジェクトを選択してください",
-  "kaneoCreateTab.roleSelectedHint": "このアシスタントに紐付済み"
+  "kaneoCreateTab.roleSelectedHint": "このアシスタントに紐付済み",
+  "kaneoCreateTab.instancesTitle": "アシスタントインスタンス",
+  "kaneoCreateTab.unboundRole": "未割り当てのロール",
+  "kaneoCreateTab.unboundProject": "プロジェクト未設定",
+  "kaneoInstance.workspaceSuffix": "ワークスペース: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "ワークスペース未割り当て"
 }

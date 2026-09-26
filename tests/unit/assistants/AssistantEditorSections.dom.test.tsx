@@ -1041,4 +1041,11 @@ describe('AssistantEditorSections', () => {
     const textarea = screen.getByPlaceholderText('Enter rules in Markdown format...');
     expect(document.activeElement).not.toBe(textarea);
   });
+
+  it('keeps the manual create wizard free of any Kaneo section', () => {
+    renderWithProviders(<AssistantEditorSections editor={createEditor()} activeAssistant={null} />);
+
+    expect(screen.queryByText(/kaneo/i)).toBeNull();
+    expect(screen.queryByTestId('assistant-card-kaneo')).toBeNull();
+  });
 });

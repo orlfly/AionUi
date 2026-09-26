@@ -1439,5 +1439,10 @@
   "kaneoCreateTab.createdNotice": "어시스턴트 준비 완료: {{name}}",
   "kaneoCreateTab.roleRequired": "에이전트 역할을 선택하세요",
   "kaneoCreateTab.projectRequired": "프로젝트를 선택하세요",
-  "kaneoCreateTab.roleSelectedHint": "이 어시스턴트에 연결됨"
+  "kaneoCreateTab.roleSelectedHint": "이 어시스턴트에 연결됨",
+  "kaneoCreateTab.instancesTitle": "어시스턴트 인스턴스",
+  "kaneoCreateTab.unboundRole": "할당되지 않은 역할",
+  "kaneoCreateTab.unboundProject": "프로젝트 없음",
+  "kaneoInstance.workspaceSuffix": "작업 공간: {{workspace}}",
+  "kaneoInstance.workspaceMissing": "작업 공간 미할당"
 }

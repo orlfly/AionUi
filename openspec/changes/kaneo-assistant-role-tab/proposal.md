@@ -6,7 +6,7 @@ Kaneo-backed assistants are currently created through a detached "Import from Ka
 
 ## What Changes
 
-- Add a dedicated **Kaneo tab** inside the assistant creation UI (assistant editor). The tab lists the agent roles defined in the connected Kaneo instance (from the roles config package / manifest roles) grouped by project.
+- Add a dedicated **Kaneo tab** on the assistants home page, alongside the enabled / mine / official tabs; the manual assistant creation wizard keeps its original structure. The tab lists the agent roles defined in the connected Kaneo instance (from the roles config package / manifest roles) as agent role cards, grouped by project, together with the assistant instances already created per role.
 - Entering a Kaneo API key inside the Kaneo tab connects to Kaneo, then lets the user bind the selected role to a **specific project**; creating the assistant instantiates that role for that project as a first-class assistant ("one instance per project per role", consistent with `kaneo-project-scoped-env`).
 - Creating an assistant instance requires an **explicit agent selection**: the user must pick exactly one Kaneo agent role (and project) before Create is enabled. The created assistant records its Kaneo role + project binding so Guide/skill sync keeps targeting the same instance.
 - **Remove** the standalone "Import from Kaneo" button on the assistants home page (settings.kaneoImport) and retire the modal entry point; Kaneo import capabilities move fully into the new Kaneo tab.
@@ -15,7 +15,7 @@ Kaneo-backed assistants are currently created through a detached "Import from Ka
 ## Capabilities
 
 ### New Capabilities
-- `kaneo-assistant-create-tab`: The dedicated Kaneo tab in the assistant creation UI: role/project listing from Kaneo, API-key entry, role→project binding, explicit role selection, and assistant instance creation.
+- `kaneo-assistant-create-tab`: The dedicated Kaneo tab on the assistants home page: role/project listing from Kaneo, API-key entry, role→project binding, explicit role selection, assistant instances grouped under their role, and assistant instance creation.
 
 ### Modified Capabilities
 - `kaneo-assistant-workspace`: Assistant instance creation moves from the import modal into the create-flow Kaneo tab; per-project per-role workspace allocation and guidance preselection requirements carry over unchanged but now mutate through the create tab.
@@ -24,7 +24,7 @@ Kaneo-backed assistants are currently created through a detached "Import from Ka
 ## Impact
 
 - **Code**:
-  - `packages/desktop/src/renderer/pages/settings/AssistantSettings/` (editor sections gain a Kaneo tab; home page loses the import button; `KaneoImportModal.tsx` retired/refactored into the tab)
+  - `packages/desktop/src/renderer/pages/settings/AssistantSettings/` (the assistants home page gains a Kaneo tab and loses the import button; the editor keeps its original structure; `KaneoImportModal.tsx` retired/refactored into the tab)
   - `kaneoClient.ts` (roles listing), `kaneoContexts.ts`, `kaneoSync.ts` (reuse sync-from-manifest), `kaneoManifest.ts`
   - i18n: new keys under `settings.kaneoCreateTab.*` (all languages in `i18n-config.json`)
 - **Compatibility**: No backend API changes; reuses AionCore kaneo credentials + env-ref pipeline from `kaneo-project-scoped-env`/`fd601c9`.

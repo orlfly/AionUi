@@ -5,12 +5,14 @@
  */
 
 import type { AssistantListItem } from '../types';
+import type { KaneoCreateTabController } from '../useKaneoCreateTab';
 import EnabledAssistantsList from './EnabledAssistantsList';
 import MyAssistantsList from './MyAssistantsList';
 import OfficialAssistantsGrid from './OfficialAssistantsGrid';
+import AssistantKaneoCreateTab from '../AssistantKaneoCreateTab';
+import type { KaneoInstanceEntry } from './KaneoInstanceCard';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
-import { Button } from '@arco-design/web-react';
 import { AionSearchInput } from '@/renderer/components/base';
 import SettingsPageHeader from '../../components/SettingsPageHeader';
 import React, { useMemo, useState } from 'react';
@@ -29,12 +31,16 @@ type AssistantHomeTabsProps = {
   onReorderEnabled: (activeId: string, overId: string) => void | Promise<void>;
   onStartChat: (assistant: AssistantListItem) => void;
   /** Tab to show on mount (e.g. return to Official after editing a builtin). */
-  initialTab?: 'enabled' | 'mine' | 'official';
+  initialTab?: 'enabled' | 'mine' | 'official' | 'kaneo';
   /** Notified whenever the active tab changes, so the parent can remember it. */
-  onTabChange?: (tab: 'enabled' | 'mine' | 'official') => void;
+  onTabChange?: (tab: 'enabled' | 'mine' | 'official' | 'kaneo') => void;
+  /** Kaneo home tab controller (connect + explicit role/project create). */
+  kaneo?: KaneoCreateTabController;
+  /** Existing (role, project) assistant instances listed under their roles. */
+  kaneoInstances?: KaneoInstanceEntry[];
 };
 
-type HomeTab = 'enabled' | 'mine' | 'official';
+type HomeTab = 'enabled' | 'mine' | 'official' | 'kaneo';
 
 const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
   assistants,
@@ -50,6 +56,8 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
   onStartChat,
   initialTab = 'enabled',
   onTabChange,
+  kaneo,
+  kaneoInstances = [],
 }) => {
   const { t, i18n } = useTranslation();
   const layout = useLayoutContext();
@@ -148,6 +156,11 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
                 label: t('settings.assistantTabOfficial', { defaultValue: 'Official' }),
                 count: counts.official,
               },
+              {
+                key: 'kaneo',
+                label: t('settings.kaneoCreateTab.title', { defaultValue: 'Kaneo' }),
+                count: kaneoInstances.length,
+              },
             ]}
             activeTab={tab}
             onTabChange={(key) => selectTab(key as HomeTab)}
@@ -182,7 +195,7 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
               onGoOfficial={() => selectTab('official')}
               searchActive={Boolean(normalizedSearchQuery)}
             />
-          ) : (
+          ) : tab === 'official' ? (
             <OfficialAssistantsGrid
               assistants={filteredAssistants}
               localeKey={localeKey}
@@ -192,6 +205,26 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
               onStartChat={onStartChat}
               searchActive={Boolean(normalizedSearchQuery)}
             />
+          ) : (
+            kaneo && (
+              <AssistantKaneoCreateTab
+                kaneo={kaneo}
+                instances={kaneoInstances}
+                localeKey={localeKey}
+                onOpenInstance={(assistantId) => {
+                  const target = assistants.find((assistant) => assistant.id === assistantId);
+                  if (target) onOpenDetail(target);
+                }}
+                onToggleInstance={(assistantId, checked) => {
+                  const target = assistants.find((assistant) => assistant.id === assistantId);
+                  if (target) onToggleEnabled(target, checked);
+                }}
+                onStartInstanceChat={(assistantId) => {
+                  const target = assistants.find((assistant) => assistant.id === assistantId);
+                  if (target) onStartChat(target);
+                }}
+              />
+            )
           )}
         </div>
       </div>
