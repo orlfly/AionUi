@@ -327,9 +327,27 @@ export function rewriteSkillName(skillMdContent: string, skillName: string): str
   return skillMdContent.replace(frontmatter[0], `---\n${rewritten}\n---\n`);
 }
 
-/** Build a zip blob with a single `<skillDir>/SKILL.md` entry (stored, no compression). */
+/**
+ * Insert `snippet` immediately after the frontmatter block (or prepend it when
+ * the content has no frontmatter). Keeping `---` on line 1 preserves importer
+ * compatibility: AionCore requires frontmatter to start at the first line.
+ */
+export function insertAfterFrontmatter(snippet: string, skillMdContent: string): string {
+  const frontmatter = skillMdContent.match(/^---\r?\n[\s\S]*?\r?\n(-{3,}[ \t]*\r?\n?)/);
+  if (!frontmatter) return snippet + skillMdContent;
+  return skillMdContent.replace(frontmatter[0], frontmatter[0] + snippet);
+}
+
+/**
+ * Build a zip blob with a single `<skillDir>/SKILL.md` entry (stored, no compression).
+ *
+ * The MCP-precedence note is inserted AFTER the frontmatter block (not at the
+ * top of the file): the AionCore skills importer requires the `---` frontmatter
+ * to start on line 1, so a leading note would make every import fail with
+ * SKILL_INVALID_FRONTMATTER.
+ */
 export function buildSkillZip(skillDir: string, skillMdContent: string): Blob {
-  const content = rewriteSkillName(kaneoMcpPrecedenceNote() + skillMdContent, skillDir);
+  const content = insertAfterFrontmatter(kaneoMcpPrecedenceNote(), rewriteSkillName(skillMdContent, skillDir));
   const encoder = new TextEncoder();
   const nameBytes = encoder.encode(`${skillDir}/SKILL.md`);
   const dataBytes = encoder.encode(content);

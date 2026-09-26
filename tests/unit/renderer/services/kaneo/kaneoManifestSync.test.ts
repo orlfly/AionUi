@@ -221,6 +221,8 @@ import {
   KANEO_PRECEDENCE_START,
   KANEO_PRECEDENCE_END,
   buildSkillZip,
+  insertAfterFrontmatter,
+  rewriteSkillName,
 } from '@/renderer/services/kaneo/kaneoSync';
 import { getKaneoContexts } from '@/renderer/services/kaneo/kaneoContexts';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
@@ -496,13 +498,22 @@ describe('skill MCP-precedence note (6.3)', () => {
     expect(note).toContain(KANEO_PRECEDENCE_START);
     expect(note).toContain(KANEO_PRECEDENCE_END);
     expect(note).toContain('provided by the host');
+    expect(note.indexOf(KANEO_PRECEDENCE_START)).toBe(0);
+  });
 
+  it('inserts the note after the frontmatter so import keeps frontmatter at line 1', () => {
     const upstream = '---\nname: whatever\n---\n\n# Skill body\n';
-    const zip = buildSkillZip('kaneo-demo', upstream);
-    return zip.text().then(() => {
-      // The zip itself is binary; verify via unzip of the single stored entry.
-      // Simpler: verify note composition directly.
-      expect(kaneoMcpPrecedenceNote().indexOf(KANEO_PRECEDENCE_START)).toBe(0);
-    });
+    const output = insertAfterFrontmatter(kaneoMcpPrecedenceNote(), rewriteSkillName(upstream, 'kaneo-demo'));
+    expect(output.startsWith('---\n')).toBe(true);
+    expect(output.indexOf(KANEO_PRECEDENCE_START)).toBeGreaterThan(0);
+    expect(output).toContain('name: kaneo-demo');
+    // Note lands right after the closing fence, before the body.
+    expect(output.indexOf('---\n', 4)).toBeLessThan(output.indexOf(KANEO_PRECEDENCE_START));
+  });
+
+  it('prepends the note when the skill has no frontmatter', () => {
+    const output = insertAfterFrontmatter(kaneoMcpPrecedenceNote(), '# plain body\n');
+    expect(output.indexOf(KANEO_PRECEDENCE_START)).toBe(0);
+    expect(output.endsWith('# plain body\n')).toBe(true);
   });
 });
