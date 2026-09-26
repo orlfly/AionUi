@@ -75,6 +75,11 @@ export type KaneoCreateTabState = {
   selectedProjectId: string | null;
   selectRole: (role: string | null) => void;
   selectProject: (projectId: string | null) => void;
+  /** Available agent engines (managed agents); loaded once for the tab. */
+  engines: Array<{ id: string; name: string }>;
+  /** Chosen engine id; defaults to the first available engine. */
+  selectedEngineId: string | null;
+  selectEngine: (engineId: string) => void;
   connect: () => void;
   disconnect: () => void;
   canCreate: boolean;
@@ -139,6 +144,8 @@ export function useKaneoCreateTab(options: {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [engines, setEngines] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedEngineId, setSelectedEngineId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<KaneoExplicitBindingResult | null>(null);
   const secretRef = useRef<string>('');
 
@@ -157,6 +164,28 @@ export function useKaneoCreateTab(options: {
   useEffect(() => {
     return () => {
       secretRef.current = '';
+    };
+  }, []);
+
+  // Load the available agent engines once: the create flow requires an
+  // explicit engine choice (defaults to the first managed agent).
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const managedAgents = await ipcBridge.acpConversation.getManagedAgents.invoke();
+        if (cancelled) return;
+        const list = (managedAgents as Array<{ id: string; name: string }>)
+          .filter((a) => Boolean(a.id))
+          .map((a) => ({ id: a.id, name: a.name }));
+        setEngines(list);
+        setSelectedEngineId((previous) => previous ?? list[0]?.id ?? null);
+      } catch {
+        if (!cancelled) setEngines([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -344,6 +373,7 @@ export function useKaneoCreateTab(options: {
         description,
         enabledSkills,
         existing,
+        agentId: selectedEngineId ?? undefined,
       });
 
       // One-shot plaintext hand-off to the backend (rotation = same PUT).
@@ -381,6 +411,7 @@ export function useKaneoCreateTab(options: {
     onCreated,
     projects,
     releaseSecrets,
+    selectedEngineId,
     selectedProjectId,
     selectedRole,
     templates,
@@ -404,6 +435,9 @@ export function useKaneoCreateTab(options: {
     selectedProjectId,
     selectRole: setSelectedRole,
     selectProject: setSelectedProjectId,
+    engines,
+    selectedEngineId,
+    selectEngine: setSelectedEngineId,
     connect,
     disconnect,
     canCreate,

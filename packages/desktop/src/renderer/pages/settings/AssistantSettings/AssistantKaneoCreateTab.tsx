@@ -253,6 +253,23 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
           </div>
 
           <div className='flex flex-col gap-6px'>
+            <div className='text-13px font-500 text-t-secondary'>{t('settings.kaneoCreateTab.enginesTitle', { defaultValue: 'Agent engine' })}</div>
+            <Select
+              value={kaneo.selectedEngineId ?? undefined}
+              onChange={(value: string) => kaneo.selectEngine(value)}
+              placeholder={t('settings.kaneoCreateTab.enginePlaceholder', { defaultValue: 'Choose an agent engine' })}
+              disabled={kaneo.creating || kaneo.engines.length === 0}
+              data-testid='select-kaneo-create-engine'
+            >
+              {kaneo.engines.map((e) => (
+                <Select.Option key={e.id} value={e.id}>
+                  {e.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className='flex flex-col gap-6px'>
             <div className='text-13px font-500 text-t-secondary'>{t('settings.kaneoCreateTab.projectsTitle')}</div>
             {kaneo.projectsError && (
               <Alert

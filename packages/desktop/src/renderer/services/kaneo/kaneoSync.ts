@@ -773,6 +773,8 @@ export type KaneoExplicitBindingOptions = {
   enabledSkills: string[];
   /** Current assistants for in-place update detection. */
   existing: Assistant[];
+  /** Explicit agent engine chosen in the tab; falls back to the first managed agent. */
+  agentId?: string;
 };
 
 /**
@@ -790,7 +792,7 @@ export type KaneoExplicitBindingOptions = {
 export async function syncKaneoAssistantForBinding(
   options: KaneoExplicitBindingOptions
 ): Promise<KaneoExplicitBindingResult> {
-  const { baseUrl, project, role, agentsMd, description, enabledSkills, existing } = options;
+  const { baseUrl, project, role, agentsMd, description, enabledSkills, existing, agentId } = options;
   if (!agentsMd.trim()) {
     throw new Error(`Role "${role}" has no AGENTS.md in the Kaneo config package`);
   }
@@ -799,12 +801,14 @@ export async function syncKaneoAssistantForBinding(
   const name = kaneoProjectAssistantName(project.name, role);
   const rolePrompt = buildClaimPrompt(role, trimmedBase);
 
-  let defaultAgentId: string | undefined;
-  try {
-    const managedAgents = await ipcBridge.acpConversation.getManagedAgents.invoke();
-    defaultAgentId = managedAgents.find((a: { id: string }) => Boolean(a.id))?.id;
-  } catch {
-    defaultAgentId = undefined;
+  let defaultAgentId: string | undefined = agentId;
+  if (!defaultAgentId) {
+    try {
+      const managedAgents = await ipcBridge.acpConversation.getManagedAgents.invoke();
+      defaultAgentId = managedAgents.find((a: { id: string }) => Boolean(a.id))?.id;
+    } catch {
+      defaultAgentId = undefined;
+    }
   }
 
   // Match a previous instance first by its stored context, then by name so a

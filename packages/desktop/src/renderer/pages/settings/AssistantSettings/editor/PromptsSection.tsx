@@ -93,9 +93,10 @@ const PromptsSection: React.FC<PromptsSectionProps> = ({
                     <div className='min-w-0 flex-1'>
                       {isEditingPrompt ? (
                         <div className='space-y-8px'>
-                          <Input
+                          <Input.TextArea
                             value={editingPromptDraft}
                             onChange={(value) => setEditingPromptDraft(value)}
+                            autoSize={{ minRows: 2, maxRows: 6 }}
                             data-testid={`input-assistant-recommended-prompt-${index}`}
                           />
                           <div className='flex items-center gap-8px'>
@@ -155,9 +156,10 @@ const PromptsSection: React.FC<PromptsSectionProps> = ({
 
           {addingPrompt && isPromptEditable ? (
             <div className='flex items-center gap-8px rounded-10px bg-base p-4px'>
-              <Input
+              <Input.TextArea
                 value={newPromptDraft}
                 onChange={(value) => setNewPromptDraft(value)}
+                autoSize={{ minRows: 2, maxRows: 6 }}
                 placeholder={t('settings.assistantRecommendedPromptsPlaceholder', {
                   defaultValue: 'Enter one suggested prompt per line',
                 })}
