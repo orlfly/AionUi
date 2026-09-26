@@ -22,11 +22,11 @@
 
 ## 4. Tests
 
-- [ ] 4.1 Unit tests for the tab hook: connect failure surfaces non-blocking error and retains base URL; role-scoped key narrows roles; create disabled without role+project
-- [ ] 4.2 Unit tests: (role, project) binding produces context with workspace `<userData>/kaneo-workspaces/<slug>/<role>/`; duplicate pair updates in place
-- [ ] 4.3 Unit tests: exactly one credential PUT per create; key state cleared on close
-- [ ] 4.4 Test: no "Import from Kaneo" button rendered on assistants home; legacy fallback path still syncs
-- [ ] 4.5 Run `bunx vitest run` for kaneo + assistant settings suites; tsc clean; oxlint/oxfmt clean
+- [x] 4.1 Unit tests for the tab hook: connect failure surfaces non-blocking error and retains base URL; role-scoped key narrows roles; create disabled without role+project
+- [x] 4.2 Unit tests: (role, project) binding produces context with workspace `<userData>/kaneo-workspaces/<slug>/<role>/`; duplicate pair updates in place
+- [x] 4.3 Unit tests: exactly one credential PUT per create; key state cleared on close
+- [x] 4.4 Test: no "Import from Kaneo" button rendered on assistants home; legacy fallback path still syncs
+- [x] 4.5 Run `bunx vitest run` for kaneo + assistant settings suites; tsc clean; oxlint/oxfmt clean
 
 ## 5. Validation
 
