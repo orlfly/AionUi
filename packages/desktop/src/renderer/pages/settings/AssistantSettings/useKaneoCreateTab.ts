@@ -112,8 +112,12 @@ const degradeContextsOnError = async (baseUrl: string, error: unknown): Promise<
   }
 };
 
-export function useKaneoCreateTab(options: { existing: Assistant[] }) {
-  const { existing } = options;
+export function useKaneoCreateTab(options: {
+  existing: Assistant[];
+  /** Called once after a successful create, with the new assistant id. */
+  onCreated?: (assistantId: string) => void;
+}) {
+  const { existing, onCreated } = options;
 
   const [baseUrl, setBaseUrl] = useState(() => {
     try {
@@ -346,6 +350,7 @@ export function useKaneoCreateTab(options: { existing: Assistant[] }) {
       setLastResult(result);
       // Rotation complete: drop the plaintext immediately after the PUT.
       releaseSecrets();
+      onCreated?.(result.assistantId);
     } catch (error) {
       setPhase('error');
       setConnectError(describeError(error));
@@ -359,6 +364,7 @@ export function useKaneoCreateTab(options: { existing: Assistant[] }) {
     canCreate,
     configPackage,
     existing,
+    onCreated,
     projects,
     releaseSecrets,
     selectedProjectId,
@@ -373,6 +379,8 @@ export function useKaneoCreateTab(options: { existing: Assistant[] }) {
     setApiKey: setApiKeyBuffered,
     phase,
     connectError,
+    // Rolled-up from connect: manifest flow or legacy fallback.
+    manifest: manifest,
     manifestNewerVersion,
     roles,
     projects,

@@ -18,7 +18,9 @@
  * read-only so users can inspect what's bundled.
  */
 import { Message } from '@arco-design/web-react';
+import { ipcBridge } from '@/common';
 import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
+import { useKaneoCreateTab } from './useKaneoCreateTab';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './assistantUtils';
 import AssistantEditorPage from './AssistantEditorPage';
@@ -98,6 +100,25 @@ const AssistantSettings: React.FC = () => {
     assistantOrder,
     setAssistantOrder,
     message,
+  });
+
+  // Kaneo create tab: handled inside the create wizard. After a successful
+  // (role, project) binding the catalog refreshes and the editor switches to
+  // the new instance in edit mode.
+  const kaneoCreateTab = useKaneoCreateTab({
+    existing: assistants,
+    onCreated: (assistantId) => {
+      void (async () => {
+        await loadAssistants();
+        try {
+          const refreshed = await ipcBridge.assistants.list.invoke();
+          const target = refreshed.find((assistant) => assistant.id === assistantId);
+          if (target) void editor.handleEdit(target);
+        } catch {
+          // The new instance stays in the list; the user can open it manually.
+        }
+      })();
+    },
   });
   const availableBackends = useMemo(
     () => buildAssistantEditorBackends(managedAgentRuntimeCatalog, localeKey, editor.editAgent),
@@ -182,6 +203,9 @@ const AssistantSettings: React.FC = () => {
       requestDelete: editor.handleDeleteClick,
       duplicate: (assistant) => void editor.handleDuplicate(assistant),
     },
+    // The Kaneo tab is mounted only in the create wizard; edit mode for a
+    // non-Kaneo assistant has no Kaneo binding flow at this stage.
+    kaneo: editor.isCreating ? kaneoCreateTab : undefined,
   };
 
   useEffect(() => {

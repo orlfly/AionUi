@@ -1,5 +1,6 @@
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import type { IMcpServer } from '@/common/config/storage';
+import type { KaneoCreateTabController } from './useKaneoCreateTab';
 
 // Skill info type
 export type SkillSource = 'builtin' | 'custom' | 'cron' | 'extension';
@@ -136,4 +137,6 @@ export type AssistantEditorViewModel = {
     requestDelete: () => void;
     duplicate: (assistant: AssistantListItem) => void;
   };
+  /** Kaneo tab controller, only mounted for the create wizard. */
+  kaneo?: KaneoCreateTabController;
 };
