@@ -25,7 +25,6 @@ import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManaged
 import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './assistantUtils';
 import AssistantEditorPage from './AssistantEditorPage';
 import AssistantHomeTabs from './home/AssistantHomeTabs';
-import KaneoImportModal from './KaneoImportModal';
 import DeleteAssistantModal from './DeleteAssistantModal';
 import SkillConfirmModals from './SkillConfirmModals';
 import type { AssistantEditorViewModel, AssistantListItem } from './types';
@@ -49,8 +48,6 @@ const AssistantSettings: React.FC = () => {
   // Keep the current management surface when returning from the editor. The
   // unified Enabled tab is the default entry point for assistant ordering.
   const [homeTab, setHomeTab] = React.useState<'enabled' | 'mine' | 'official'>('enabled');
-  const [kaneoImportVisible, setKaneoImportVisible] = React.useState(false);
-
   // "Chat" on an assistant → open a new conversation with it preselected.
   const handleStartChat = useCallback(
     (assistant: AssistantListItem) => {
@@ -279,7 +276,6 @@ const AssistantSettings: React.FC = () => {
                 setHomeTab('mine');
                 void editor.handleCreate();
               }}
-              onKaneoImport={() => setKaneoImportVisible(true)}
               onToggleEnabled={(assistant, checked) => void editor.handleToggleEnabled(assistant, checked)}
               onReorderEnabled={async (activeId, overId) => {
                 try {
@@ -291,14 +287,6 @@ const AssistantSettings: React.FC = () => {
               onStartChat={handleStartChat}
             />
           )}
-
-          <KaneoImportModal
-            visible={kaneoImportVisible}
-            onCancel={() => setKaneoImportVisible(false)}
-            onSynced={() => {
-              void loadAssistants();
-            }}
-          />
 
           <DeleteAssistantModal
             visible={editor.deleteConfirmVisible}

@@ -25,7 +25,6 @@ type AssistantHomeTabsProps = {
   onDuplicate: (assistant: AssistantListItem) => void;
   onDelete: (assistant: AssistantListItem) => void;
   onCreate: () => void;
-  onKaneoImport: () => void;
   onToggleEnabled: (assistant: AssistantListItem, checked: boolean) => void;
   onReorderEnabled: (activeId: string, overId: string) => void | Promise<void>;
   onStartChat: (assistant: AssistantListItem) => void;
@@ -46,7 +45,6 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
   onDuplicate,
   onDelete,
   onCreate,
-  onKaneoImport,
   onToggleEnabled,
   onReorderEnabled,
   onStartChat,
@@ -121,9 +119,6 @@ const AssistantHomeTabs: React.FC<AssistantHomeTabsProps> = ({
                     onChange={setSearchQuery}
                   />
                 )}
-                <Button className='shrink-0' data-testid='btn-kaneo-import' onClick={onKaneoImport}>
-                  {t('settings.kaneoImport', { defaultValue: 'Import from Kaneo' })}
-                </Button>
                 <TalkToButlerButton
                   className='shrink-0'
                   label={t('settings.createAssistant', { defaultValue: 'Create Assistant' })}
