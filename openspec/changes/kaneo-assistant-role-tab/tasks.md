@@ -6,7 +6,7 @@
 - [x] 1.2 Implement the connect state machine hook: base URL (last-used default) + password-masked API key + Connect → uses `fetchKaneoBootstrap` (fallback-first) and `fetchKaneoConfigPackage`
 - [ ] 1.3 Roles listing UI: render roles from config package / bootstrap, group by project; role-scoped keys narrow selectable roles to the bound role and show others as unavailable
 - [ ] 1.4 Explicit role + project selection UI with Create disabled until both are selected; duplicate (role, project) pair detected from existing contexts shows "update in place" hint
-- [ ] 1.5 i18n: add `settings.kaneoCreateTab.*` keys in all configured languages; run `bun run i18n:types` and `node scripts/check-i18n.js`
+- [x] 1.5 i18n: add `settings.kaneoCreateTab.*` keys in all configured languages; run `bun run i18n:types` and `node scripts/check-i18n.js`
 
 ## 2. Instance creation and credential hand-off
 
