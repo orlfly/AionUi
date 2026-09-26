@@ -10,9 +10,9 @@
 
 ## 2. Instance creation and credential hand-off
 
-- [ ] 2.1 Create assistant from the tab: build/reuse the Kaneo context (`contextFromManifest` semantics), workspace path record, and assistant upsert via `syncKaneoAssistantsFromManifest` (project-bound) or `syncKaneoAssistants` (legacy fallback)
-- [ ] 2.2 Credential transfer on create: single `PUT /api/kaneo-credentials/{contextId}` (same IPC path the modal used); drop key state after success or editor close; no renderer persistence
-- [ ] 2.3 Rotation path: re-connecting an existing (role, project) context with a new key replaces ciphertext and updates the assistant in place
+- [x] 2.1 Create assistant from the tab: build/reuse the Kaneo context (`contextFromManifest` semantics), workspace path record, and assistant upsert via `syncKaneoAssistantsFromManifest` (project-bound) or `syncKaneoAssistants` (legacy fallback)
+- [x] 2.2 Credential transfer on create: single `PUT /api/kaneo-credentials/{contextId}` (same IPC path the modal used); drop key state after success or editor close; no renderer persistence
+- [x] 2.3 Rotation path: re-connecting an existing (role, project) context with a new key replaces ciphertext and updates the assistant in place
 
 ## 3. Retire the standalone Import from Kaneo entry
 
