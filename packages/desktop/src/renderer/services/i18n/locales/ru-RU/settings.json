@@ -1457,5 +1457,17 @@
   "kaneoEnvDriftTag": "Окружение изменено",
   "kaneoSkillDrift": "Навык {{skill}} отличается от содержимого этого экземпляра Kaneo; установленная версия сохранена.",
   "kaneoSkillDriftTag": "Расхождение навыка",
-  "kaneoKeyExpiring": "Срок действия API-ключа Kaneo скоро истечёт. Подключитесь с новым ключом, чтобы заменить его."
+  "kaneoKeyExpiring": "Срок действия API-ключа Kaneo скоро истечёт. Подключитесь с новым ключом, чтобы заменить его.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "Создайте помощника для явно выбранной роли агента, привязанной к конкретному проекту Kaneo.",
+  "kaneoCreateTab.rolesTitle": "Роли агентов",
+  "kaneoCreateTab.roleUnavailableHint": "Этот ключ привязан к другой роли",
+  "kaneoCreateTab.projectsTitle": "Проекты",
+  "kaneoCreateTab.projectPlaceholder": "Выберите проект, к которому привязывается эта роль",
+  "kaneoCreateTab.projectsLoadFailed": "Не удалось загрузить проекты: {{reason}}",
+  "kaneoCreateTab.updateHint": "Для этой роли и проекта уже существует экземпляр; создание обновит его на месте.",
+  "kaneoCreateTab.createButton": "Создать помощника",
+  "kaneoCreateTab.createdNotice": "Помощник готов: {{name}}",
+  "kaneoCreateTab.roleRequired": "Выберите роль агента",
+  "kaneoCreateTab.projectRequired": "Выберите проект"
 }

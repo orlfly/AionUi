@@ -1444,5 +1444,17 @@
   "kaneoEnvDriftTag": "环境已变化",
   "kaneoSkillDrift": "技能 {{skill}} 与该 Kaneo 实例内容不一致，已保留已安装版本。",
   "kaneoSkillDriftTag": "技能漂移",
-  "kaneoKeyExpiring": "Kaneo API key 即将过期，请使用新 key 重新连接以完成轮换。"
+  "kaneoKeyExpiring": "Kaneo API key 即将过期，请使用新 key 重新连接以完成轮换。",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "为显式指定的 agent 角色创建助手，并绑定到特定的 Kaneo 项目。",
+  "kaneoCreateTab.rolesTitle": "Agent 角色",
+  "kaneoCreateTab.roleUnavailableHint": "此 key 绑定了其他角色",
+  "kaneoCreateTab.projectsTitle": "项目",
+  "kaneoCreateTab.projectPlaceholder": "选择该角色绑定的项目",
+  "kaneoCreateTab.projectsLoadFailed": "项目加载失败：{{reason}}",
+  "kaneoCreateTab.updateHint": "该角色与项目已存在实例，创建将原位更新。",
+  "kaneoCreateTab.createButton": "创建助手",
+  "kaneoCreateTab.createdNotice": "助手已就绪：{{name}}",
+  "kaneoCreateTab.roleRequired": "请选择 agent 角色",
+  "kaneoCreateTab.projectRequired": "请选择项目"
 }

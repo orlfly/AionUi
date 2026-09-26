@@ -1443,5 +1443,17 @@
   "kaneoEnvDriftTag": "Environnement modifié",
   "kaneoSkillDrift": "La compétence {{skill}} diffère du contenu de cette instance Kaneo ; la version installée a été conservée.",
   "kaneoSkillDriftTag": "Divergence de compétence",
-  "kaneoKeyExpiring": "La clé API Kaneo expire bientôt. Reconnectez-vous avec une nouvelle clé pour la renouveler."
+  "kaneoKeyExpiring": "La clé API Kaneo expire bientôt. Reconnectez-vous avec une nouvelle clé pour la renouveler.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "Créez un assistant pour un rôle d'agent explicitement choisi et lié à un projet Kaneo précis.",
+  "kaneoCreateTab.rolesTitle": "Rôles d'agent",
+  "kaneoCreateTab.roleUnavailableHint": "Cette clé est liée à un autre rôle",
+  "kaneoCreateTab.projectsTitle": "Projets",
+  "kaneoCreateTab.projectPlaceholder": "Sélectionnez le projet auquel ce rôle est lié",
+  "kaneoCreateTab.projectsLoadFailed": "Impossible de charger les projets : {{reason}}",
+  "kaneoCreateTab.updateHint": "Une instance existe déjà pour ce rôle et ce projet ; la création la met à jour sur place.",
+  "kaneoCreateTab.createButton": "Créer l'assistant",
+  "kaneoCreateTab.createdNotice": "Assistant prêt : {{name}}",
+  "kaneoCreateTab.roleRequired": "Sélectionnez un rôle d'agent",
+  "kaneoCreateTab.projectRequired": "Sélectionnez un projet"
 }

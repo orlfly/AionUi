@@ -1458,5 +1458,17 @@
   "kaneoEnvDriftTag": "Середовище змінено",
   "kaneoSkillDrift": "Навичка {{skill}} відрізняється від вмісту цього екземпляра Kaneo; встановлену версію збережено.",
   "kaneoSkillDriftTag": "Розбіжність навички",
-  "kaneoKeyExpiring": "Термін дії API-ключа Kaneo скоро закінчиться. Підключіться з новим ключем, щоб його замінити."
+  "kaneoKeyExpiring": "Термін дії API-ключа Kaneo скоро закінчиться. Підключіться з новим ключем, щоб його замінити.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "Створіть асистента для явно обраної ролі агента, прив'язаної до конкретного проєкту Kaneo.",
+  "kaneoCreateTab.rolesTitle": "Ролі агентів",
+  "kaneoCreateTab.roleUnavailableHint": "Цей ключ прив'язаний до іншої ролі",
+  "kaneoCreateTab.projectsTitle": "Проєкти",
+  "kaneoCreateTab.projectPlaceholder": "Виберіть проєкт, до якого прив'язується ця роль",
+  "kaneoCreateTab.projectsLoadFailed": "Не вдалося завантажити проєкти: {{reason}}",
+  "kaneoCreateTab.updateHint": "Для цієї ролі та проєкту вже існує екземпляр; створення оновить його на місці.",
+  "kaneoCreateTab.createButton": "Створити асистента",
+  "kaneoCreateTab.createdNotice": "Асистент готовий: {{name}}",
+  "kaneoCreateTab.roleRequired": "Виберіть роль агента",
+  "kaneoCreateTab.projectRequired": "Виберіть проєкт"
 }

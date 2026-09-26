@@ -1443,5 +1443,17 @@
   "kaneoEnvDriftTag": "محیط تغییر کرد",
   "kaneoSkillDrift": "مهارت {{skill}} با محتوای این نمونه Kaneo متفاوت است؛ نسخه نصب‌شده حفظ شد.",
   "kaneoSkillDriftTag": "ناهمسانی مهارت",
-  "kaneoKeyExpiring": "کلید API Kaneo به‌زودی منقضی می‌شود. برای جایگزینی، با کلید جدید دوباره متصل شوید."
+  "kaneoKeyExpiring": "کلید API Kaneo به‌زودی منقضی می‌شود. برای جایگزینی، با کلید جدید دوباره متصل شوید.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "برای یک نقش عامل که صراحتاً انتخاب شده و به یک پروژه مشخص Kaneo متصل است، دستیار بسازید.",
+  "kaneoCreateTab.rolesTitle": "نقش‌های عامل",
+  "kaneoCreateTab.roleUnavailableHint": "این کلید به نقش دیگری متصل است",
+  "kaneoCreateTab.projectsTitle": "پروژه‌ها",
+  "kaneoCreateTab.projectPlaceholder": "پروژه‌ای را انتخاب کنید که این نقش به آن متصل می‌شود",
+  "kaneoCreateTab.projectsLoadFailed": "بارگذاری پروژه‌ها ممکن نشد: {{reason}}",
+  "kaneoCreateTab.updateHint": "برای این نقش و پروژه قبلاً نمونه‌ای وجود دارد؛ ساخت، آن را در همان‌جا به‌روزرسانی می‌کند.",
+  "kaneoCreateTab.createButton": "ساخت دستیار",
+  "kaneoCreateTab.createdNotice": "دستیار آماده است: {{name}}",
+  "kaneoCreateTab.roleRequired": "یک نقش عامل انتخاب کنید",
+  "kaneoCreateTab.projectRequired": "یک پروژه انتخاب کنید"
 }

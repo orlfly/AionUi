@@ -1446,5 +1446,17 @@
   "kaneoEnvDriftTag": "Ambiente alterado",
   "kaneoSkillDrift": "A skill {{skill}} difere do conteúdo desta instância do Kaneo; a versão instalada foi mantida.",
   "kaneoSkillDriftTag": "Skill divergente",
-  "kaneoKeyExpiring": "A chave de API do Kaneo expirará em breve. Reconecte com uma nova chave para rotacioná-la."
+  "kaneoKeyExpiring": "A chave de API do Kaneo expirará em breve. Reconecte com uma nova chave para rotacioná-la.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "Crie um assistente para um papel de agente escolhido explicitamente e vinculado a um projeto específico do Kaneo.",
+  "kaneoCreateTab.rolesTitle": "Papéis de agente",
+  "kaneoCreateTab.roleUnavailableHint": "Esta chave está vinculada a outro papel",
+  "kaneoCreateTab.projectsTitle": "Projetos",
+  "kaneoCreateTab.projectPlaceholder": "Selecione o projeto ao qual este papel será vinculado",
+  "kaneoCreateTab.projectsLoadFailed": "Não foi possível carregar os projetos: {{reason}}",
+  "kaneoCreateTab.updateHint": "Já existe uma instância para este papel e projeto; criar atualiza-a no lugar.",
+  "kaneoCreateTab.createButton": "Criar assistente",
+  "kaneoCreateTab.createdNotice": "Assistente pronto: {{name}}",
+  "kaneoCreateTab.roleRequired": "Selecione um papel de agente",
+  "kaneoCreateTab.projectRequired": "Selecione um projeto"
 }

@@ -1443,5 +1443,17 @@
   "kaneoEnvDriftTag": "Ortam değişti",
   "kaneoSkillDrift": "{{skill}} becerisi bu Kaneo örneğinin içeriğinden farklı; yüklü sürüm korundu.",
   "kaneoSkillDriftTag": "Beceri uyuşmazlığı",
-  "kaneoKeyExpiring": "Kaneo API anahtarının süresi yakında doluyor. Yenilemek için yeni anahtarla yeniden bağlanın."
+  "kaneoKeyExpiring": "Kaneo API anahtarının süresi yakında doluyor. Yenilemek için yeni anahtarla yeniden bağlanın.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "Açıkça seçilmiş bir ajan rolünü belirli bir Kaneo projesine bağlayarak bir asistan oluşturun.",
+  "kaneoCreateTab.rolesTitle": "Ajan rolleri",
+  "kaneoCreateTab.roleUnavailableHint": "Bu anahtar başka bir role bağlı",
+  "kaneoCreateTab.projectsTitle": "Projeler",
+  "kaneoCreateTab.projectPlaceholder": "Bu rolün bağlanacağı projeyi seçin",
+  "kaneoCreateTab.projectsLoadFailed": "Projeler yüklenemedi: {{reason}}",
+  "kaneoCreateTab.updateHint": "Bu rol ve proje için zaten bir örnek var; oluşturmak onu yerinde günceller.",
+  "kaneoCreateTab.createButton": "Asistan oluştur",
+  "kaneoCreateTab.createdNotice": "Asistan hazır: {{name}}",
+  "kaneoCreateTab.roleRequired": "Bir ajan rolü seçin",
+  "kaneoCreateTab.projectRequired": "Bir proje seçin"
 }

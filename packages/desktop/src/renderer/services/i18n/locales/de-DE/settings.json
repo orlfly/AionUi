@@ -1443,5 +1443,17 @@
   "kaneoEnvDriftTag": "Umgebung geändert",
   "kaneoSkillDrift": "Skill {{skill}} weicht vom Inhalt dieser Kaneo-Instanz ab; die installierte Version wurde beibehalten.",
   "kaneoSkillDriftTag": "Skill-Abweichung",
-  "kaneoKeyExpiring": "Der Kaneo-API-Schlüssel läuft bald ab. Zum Rotieren mit einem neuen Schlüssel neu verbinden."
+  "kaneoKeyExpiring": "Der Kaneo-API-Schlüssel läuft bald ab. Zum Rotieren mit einem neuen Schlüssel neu verbinden.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "Assistenten für eine ausdrücklich gewählte Agent-Rolle erstellen, die an ein bestimmtes Kaneo-Projekt gebunden ist.",
+  "kaneoCreateTab.rolesTitle": "Agent-Rollen",
+  "kaneoCreateTab.roleUnavailableHint": "Dieser Schlüssel ist an eine andere Rolle gebunden",
+  "kaneoCreateTab.projectsTitle": "Projekte",
+  "kaneoCreateTab.projectPlaceholder": "Projekt wählen, an das diese Rolle gebunden wird",
+  "kaneoCreateTab.projectsLoadFailed": "Projekte konnten nicht geladen werden: {{reason}}",
+  "kaneoCreateTab.updateHint": "Für diese Rolle und dieses Projekt existiert bereits eine Instanz; das Erstellen aktualisiert sie an Ort und Stelle.",
+  "kaneoCreateTab.createButton": "Assistent erstellen",
+  "kaneoCreateTab.createdNotice": "Assistent bereit: {{name}}",
+  "kaneoCreateTab.roleRequired": "Agent-Rolle wählen",
+  "kaneoCreateTab.projectRequired": "Projekt wählen"
 }

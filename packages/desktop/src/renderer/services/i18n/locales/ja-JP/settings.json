@@ -1445,5 +1445,17 @@
   "kaneoEnvDriftTag": "環境が変更されました",
   "kaneoSkillDrift": "スキル {{skill}} はこの Kaneo インスタンスの内容と異なるため、インストール済みのものを維持しました。",
   "kaneoSkillDriftTag": "スキル差異",
-  "kaneoKeyExpiring": "Kaneo API キーの有効期限が近づいています。新しいキーで再接続してローテーションしてください。"
+  "kaneoKeyExpiring": "Kaneo API キーの有効期限が近づいています。新しいキーで再接続してローテーションしてください。",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "明示的に選択したエージェントロールを特定の Kaneo プロジェクトに紐付けてアシスタントを作成します。",
+  "kaneoCreateTab.rolesTitle": "エージェントロール",
+  "kaneoCreateTab.roleUnavailableHint": "このキーは別のロールに紐付いています",
+  "kaneoCreateTab.projectsTitle": "プロジェクト",
+  "kaneoCreateTab.projectPlaceholder": "このロールを紐付けるプロジェクトを選択",
+  "kaneoCreateTab.projectsLoadFailed": "プロジェクトを読み込めませんでした：{{reason}}",
+  "kaneoCreateTab.updateHint": "このロールとプロジェクトの組み合わせには既にインスタンスがあります。作成するとその場所で更新されます。",
+  "kaneoCreateTab.createButton": "アシスタントを作成",
+  "kaneoCreateTab.createdNotice": "アシスタント準備完了：{{name}}",
+  "kaneoCreateTab.roleRequired": "エージェントロールを選択してください",
+  "kaneoCreateTab.projectRequired": "プロジェクトを選択してください"
 }

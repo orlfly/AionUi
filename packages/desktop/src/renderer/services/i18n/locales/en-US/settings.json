@@ -1443,5 +1443,17 @@
   "kaneoEnvDriftTag": "Environment changed",
   "kaneoSkillDrift": "Skill {{skill}} was kept as installed (content differs from this Kaneo instance).",
   "kaneoSkillDriftTag": "Skill drift",
-  "kaneoKeyExpiring": "The Kaneo API key expires soon. Reconnect with a new key to rotate it."
+  "kaneoKeyExpiring": "The Kaneo API key expires soon. Reconnect with a new key to rotate it.",
+  "kaneoCreateTab.title": "Kaneo",
+  "kaneoCreateTab.lead": "Create an assistant for an explicit agent role bound to a specific Kaneo project.",
+  "kaneoCreateTab.rolesTitle": "Agent roles",
+  "kaneoCreateTab.roleUnavailableHint": "This key is bound to another role",
+  "kaneoCreateTab.projectsTitle": "Projects",
+  "kaneoCreateTab.projectPlaceholder": "Select the project this role is bound to",
+  "kaneoCreateTab.projectsLoadFailed": "Could not load projects: {{reason}}",
+  "kaneoCreateTab.updateHint": "An instance already exists for this role and project; creating updates it in place.",
+  "kaneoCreateTab.createButton": "Create assistant",
+  "kaneoCreateTab.createdNotice": "Assistant ready: {{name}}",
+  "kaneoCreateTab.roleRequired": "Select an agent role",
+  "kaneoCreateTab.projectRequired": "Select a project"
 }
