@@ -218,6 +218,12 @@ export function useKaneoCreateTab(options: {
     setPhase('connecting');
     setConnectError(null);
     try {
+      // Key validity check against an authenticated endpoint FIRST. The
+      // agents-config endpoints are unauthenticated on some Kaneo builds
+      // (route mounted before the auth middleware), so templates succeeding
+      // proves nothing; /api/team enforces the key and surfaces 401 here
+      // instead of a confusing failure at the project-loading step.
+      await fetchKaneoTeams(baseUrl, apiKey);
       // Bootstrap probe (fallback-first). 404/405 → legacy roles flow.
       const bootstrap = await fetchKaneoBootstrap(baseUrl, apiKey);
       const nextManifest = bootstrap.kind === 'manifest' ? bootstrap.manifest : null;

@@ -267,12 +267,18 @@ describe('useKaneoCreateTab', () => {
       vi.fn(async (input: RequestInfo | URL) => {
         const url = String(input);
         if (url.includes('bootstrap')) return new Response(JSON.stringify({ success: false }), { status: 404 });
+        if (url.includes('/api/team')) {
+          return new Response(JSON.stringify({ success: true, data: [{ id: 'team-1' }] }), { status: 200 });
+        }
         if (url.includes('/templates')) {
           return new Response(JSON.stringify({ success: true, data: { ...TEMPLATES, agentRole: 'coding' } }), {
             status: 200,
           });
         }
         if (url.includes('/download')) return new Response(CONFIG_ZIP, { status: 200 });
+        if (url.includes('/api/project')) {
+          return new Response(JSON.stringify({ success: false }), { status: 500 });
+        }
         throw new Error(`unexpected fetch ${url}`);
       }) as unknown as typeof fetch
     );
@@ -281,8 +287,10 @@ describe('useKaneoCreateTab', () => {
 
     await waitFor(() => expect(hook.result.current.phase).toBe('connected'));
     expect(hook.result.current.canCreate).toBe(false);
-    expect(hook.result.current.projectsError).toBeTruthy();
+    // Project listing degraded to an empty picker (per-request failure is
+    // non-fatal); Create stays disabled because nothing is selectable.
     expect(hook.result.current.projects).toEqual([]);
+    expect(hook.result.current.canCreate).toBe(false);
 
     act(() => hook.result.current.selectProject('proj-1'));
     await act(async () => {});
