@@ -471,8 +471,10 @@ export async function syncKaneoAssistants(
       continue;
     }
     const importResult = await importKaneoSkill(skill.name, content);
-    if (importResult.ok) {
+    if (importResult.ok === true) {
       importedSkillNames.add(importResult.name);
+    } else {
+      console.warn(`[kaneo] skill import failed for ${skill.name}: ${importResult.error}`);
     }
   }
 
@@ -624,7 +626,8 @@ export async function syncKaneoAssistantsFromManifest(options: {
       continue;
     }
     const importResult = await importKaneoSkill(skill.name, content);
-    if (importResult.ok) importedSkillNames.add(importResult.name);
+    if (importResult.ok === true) importedSkillNames.add(importResult.name);
+    else console.warn(`[kaneo] skill import failed for ${skill.name}: ${importResult.error}`);
   }
 
   const agentsMd = config.roles[role];
