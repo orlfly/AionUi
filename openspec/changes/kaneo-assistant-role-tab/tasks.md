@@ -16,9 +16,9 @@
 
 ## 3. Retire the standalone Import from Kaneo entry
 
-- [ ] 3.1 Remove the `btn-kaneo-import` button from `AssistantHomeTabs` and unmount/delete `KaneoImportModal.tsx`; keep home page actions otherwise intact
-- [ ] 3.2 Port legacy-fallback semantics (unbound manifest / 404/405) into the tab flow; retire modal-only i18n keys and add new keys for the tab
-- [ ] 3.3 Clean up dead imports/state (`onKaneoImport`, `kaneoImportVisible`) and verify no `KaneoImportModal` references remain
+- [x] 3.1 Remove the `btn-kaneo-import` button from `AssistantHomeTabs` and unmount/delete `KaneoImportModal.tsx`; keep home page actions otherwise intact
+- [x] 3.2 Port legacy-fallback semantics (unbound manifest / 404/405) into the tab flow; retire modal-only i18n keys and add new keys for the tab
+- [x] 3.3 Clean up dead imports/state (`onKaneoImport`, `kaneoImportVisible`) and verify no `KaneoImportModal` references remain
 
 ## 4. Tests
 
