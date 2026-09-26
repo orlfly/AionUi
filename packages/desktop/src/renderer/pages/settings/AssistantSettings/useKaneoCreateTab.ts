@@ -359,7 +359,8 @@ export function useKaneoCreateTab(options: {
           continue;
         }
         const importResult = await importKaneoSkill(skill.name, content);
-        if (importResult.ok) enabledSkills.push(importResult.name);
+        if (importResult.ok === true) enabledSkills.push(importResult.name);
+        else console.warn(`[kaneo] skill import failed for ${skill.name}: ${importResult.error}`);
       }
 
       const description =
