@@ -91,9 +91,15 @@ export const KANEO_MCP_BUILTIN_ID = 'builtin-kaneo';
  */
 export function buildKaneoMcpServer(context: KaneoContext): IMcpServer {
   const envRef = `kaneo:${context.id}`;
+  // Two key-name families on purpose: `KANEO_API_URL`/`KANEO_API_KEY` are what
+  // the `kaneo-*` skills (curl) document, `KANEO_BASE_URL`/`KANEO_TOKEN` are
+  // what the upstream `kaneo-mcp` server itself reads. All four carry the same
+  // `kaneo:<contextId>` sentinel; AionCore resolves them at agent-build time.
   const env: Record<string, string> = {
     KANEO_API_URL: envRef,
     KANEO_API_KEY: envRef,
+    KANEO_BASE_URL: envRef,
+    KANEO_TOKEN: envRef,
   };
   const serverConfig = { command: 'npx', args: ['-y', 'kaneo-mcp@latest'], env };
   const now = Date.now();

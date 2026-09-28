@@ -487,6 +487,9 @@ describe('kaneo session MCP server (6.1 envRef)', () => {
     const env = server.transport.type === 'stdio' ? server.transport.env : {};
     expect(env.KANEO_API_URL).toBe('kaneo:kctx-test1');
     expect(env.KANEO_API_KEY).toBe('kaneo:kctx-test1');
+    // kaneo-mcp's own key names (the server reads KANEO_BASE_URL/KANEO_TOKEN).
+    expect(env.KANEO_BASE_URL).toBe('kaneo:kctx-test1');
+    expect(env.KANEO_TOKEN).toBe('kaneo:kctx-test1');
     // No plaintext key material anywhere in the serialized server.
     expect(JSON.stringify(server)).not.toMatch(/api[_-]?key"\s*:\s*"(?!kaneo:)/i);
   });
