@@ -18,7 +18,24 @@
 // filtering. The legacy key is removed only after the context exists.
 
 import { configService } from '@/common/config/configService';
-import type { KaneoEnvironmentManifest } from './kaneoManifest';
+import type { KaneoEnvironmentManifest, KaneoManifestRepository } from './kaneoManifest';
+
+/** Structured repository info persisted on a context (no credentials). */
+export type KaneoContextRepository = KaneoManifestRepository;
+
+/** Repo facts sourced outside the bootstrap manifest (e.g. a VCS integration endpoint). */
+export type KaneoRepoIntegration = {
+  /** VCS kind (e.g. `github`/`gitea`/`gitlab`) as reported or endpoint-derived. */
+  type: string;
+  source: 'vcs-integration';
+  baseUrl: string;
+  repositoryOwner: string;
+  repositoryName: string;
+  /** Clone URL when the integration reports one; null → render owner/name only. */
+  cloneUrl: string | null;
+  /** Branch pattern reported by the integration; null when absent — never fabricated. */
+  branchPattern: string | null;
+};
 
 export type KaneoContext = {
   /** Stable id; also the address for the stored credential ref. */
@@ -37,6 +54,10 @@ export type KaneoContext = {
     envHash: string;
     manifestVersion: number;
   } | null;
+  /** Structured repository facts, persisted so later flows need no refetch. */
+  repositories: KaneoContextRepository[] | null;
+  /** Repo facts from a non-manifest source; null when none was available. */
+  repoIntegration: KaneoRepoIntegration | null;
   /** Key expiry as reported by Kaneo, ISO string; null when none. */
   keyExpiresAt: string | null;
   /** Set when Kaneo reports the binding unusable (archived/deleted/expired). */
@@ -62,6 +83,8 @@ export function contextFromManifest(manifest: KaneoEnvironmentManifest, baseUrl:
     workspace: null,
     assistantId: null,
     manifestSummary: { envHash: manifest.envHash, manifestVersion: manifest.manifestVersion },
+    repositories: manifest.repositories.length > 0 ? [...manifest.repositories] : [],
+    repoIntegration: null,
     keyExpiresAt: null,
     degraded: Boolean(manifest.degraded),
     degradedReason: manifest.degraded ? 'manifest-degraded' : null,
@@ -121,6 +144,10 @@ export async function upsertKaneoContext(context: KaneoContext): Promise<{ conte
       projectName: context.projectName,
       projectSlug: context.projectSlug,
       manifestSummary: context.manifestSummary,
+      // Repo facts refresh with each sync; null keeps prior facts (explicit
+      // binding without a manifest must not erase manifest-sourced facts).
+      repositories: context.repositories ?? existing.repositories,
+      repoIntegration: context.repoIntegration ?? existing.repoIntegration,
       degraded: context.degraded,
       degradedReason: context.degradedReason,
     };
@@ -181,6 +208,8 @@ export async function migrateKaneoContexts(): Promise<void> {
     workspace: null,
     assistantId: null,
     manifestSummary: null,
+    repositories: null,
+    repoIntegration: null,
     keyExpiresAt: null,
     degraded: false,
     degradedReason: null,

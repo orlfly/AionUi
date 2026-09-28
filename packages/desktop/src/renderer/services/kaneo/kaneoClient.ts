@@ -284,7 +284,11 @@ export async function fetchKaneoTeams(baseUrl: string, apiKey: string): Promise<
  * Falls back to a per-request timeout so an unreachable instance cannot
  * hang the connect flow; callers treat errors as an empty list.
  */
-export async function fetchKaneoProjects(baseUrl: string, apiKey: string, teamId: string): Promise<KaneoProjectSummary[]> {
+export async function fetchKaneoProjects(
+  baseUrl: string,
+  apiKey: string,
+  teamId: string
+): Promise<KaneoProjectSummary[]> {
   const base = normalizeKaneoBaseUrl(baseUrl);
   const url = `${base}/api/project?teamId=${encodeURIComponent(teamId)}`;
   const response = await kaneoFetch(url, apiKey);
@@ -296,6 +300,89 @@ export async function fetchKaneoProjects(baseUrl: string, apiKey: string, teamId
   if (!Array.isArray(data)) return [];
   return data.filter(
     (p): p is KaneoProjectSummary & { archivedAt?: string | null } =>
-      Boolean(p) && typeof (p as KaneoProjectSummary).id === 'string' && !(p as { archivedAt?: string | null }).archivedAt
+      Boolean(p) &&
+      typeof (p as KaneoProjectSummary).id === 'string' &&
+      !(p as { archivedAt?: string | null }).archivedAt
   );
+}
+
+// ── VCS integration (repo facts for a project) ─────────────────────────
+
+/** Repository facts from a Kaneo VCS integration, tolerant shape. */
+export type KaneoProjectRepo = {
+  /** VCS kind reported by the integration (e.g. `github`/`gitea`/`gitlab`). */
+  type: string;
+  /** As reported by the integration; empty string when absent (owner/name still render). */
+  cloneUrl: string;
+  repositoryOwner: string;
+  repositoryName: string;
+  /** As reported by the integration; null when absent — never fabricated. */
+  branchPattern: string | null;
+};
+
+/**
+ * Parse a VCS-integration project payload tolerantly. Kaneo builds vary in
+ * envelope and field naming (and carry GitHub/Gitea/GitLab repos alike), so
+ * accept the common spellings for every field including the VCS kind.
+ * Returns null when the payload does not carry enough facts to identify a
+ * repository.
+ */
+export function parseKaneoProjectRepo(data: unknown, fallbackType = 'git'): KaneoProjectRepo | null {
+  if (!data || typeof data !== 'object') return null;
+  const d = data as Record<string, unknown>;
+  const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+  const owner = str(d.repositoryOwner) ?? str(d.owner) ?? str(d.namespace) ?? str(d.group);
+  const name = str(d.repositoryName) ?? str(d.name) ?? str(d.projectName) ?? str(d.path);
+  const branchPattern = str(d.branchPattern) ?? str(d.branch_pattern) ?? str(d.branchPatternRegex);
+  if (!owner || !name) return null;
+  // VCS kind when the integration reports one; falls back to the endpoint-derived type.
+  const type =
+    str(d.type) ?? str(d.vcsType) ?? str(d.vcs_type) ?? str(d.provider) ?? str(d.providerType) ?? fallbackType;
+  // An explicit clone URL when the integration reports one; empty string means
+  // "known repo, no clone URL rendered" — guidance renders owner/name only.
+  const cloneUrl =
+    str(d.cloneUrl) ?? str(d.http_url_to_repo) ?? str(d.httpUrlToRepo) ?? str(d.webUrl) ?? str(d.web_url) ?? '';
+  return { type, cloneUrl, repositoryOwner: owner, repositoryName: name, branchPattern };
+}
+
+/** Integration endpoints probed for repo facts, in preference order. */
+const REPO_INTEGRATION_ENDPOINTS = [
+  'gitlab-integration',
+  'github-integration',
+  'gitea-integration',
+  'vcs-integration',
+] as const;
+
+/**
+ * Fetch repository facts for one project from the Kaneo VCS integration
+ * (e.g. `GET /api/gitlab-integration/project/{id}`). Instances integrate
+ * different providers, so the endpoints are probed in order until one
+ * answers with a parseable payload.
+ *
+ * Degrades to `null` when no endpoint exists (404/405 on all), no payload
+ * identifies a repository, or a request fails hard — the create flow
+ * renders repo-less guidance in that case, never an error.
+ */
+export async function fetchKaneoProjectRepo(
+  baseUrl: string,
+  apiKey: string,
+  projectId: string
+): Promise<KaneoProjectRepo | null> {
+  const base = normalizeKaneoBaseUrl(baseUrl);
+  for (const endpoint of REPO_INTEGRATION_ENDPOINTS) {
+    const fallbackType = endpoint.replace('-integration', '');
+    try {
+      const response = await kaneoFetch(`${base}/api/${endpoint}/project/${encodeURIComponent(projectId)}`, apiKey);
+      if (response.status === 404 || response.status === 405) continue; // endpoint absent: try the next provider.
+      if (!response.ok) return null;
+      const body: unknown = await response.json().catch((): null => null);
+      const data = (body as { data?: unknown } | null)?.data ?? body;
+      const repo = parseKaneoProjectRepo(data, fallbackType);
+      if (repo) return repo;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }

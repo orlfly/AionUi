@@ -21,6 +21,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchKaneoConfigPackage,
+  fetchKaneoProjectRepo,
   fetchKaneoProjects,
   fetchKaneoTeams,
   fetchKaneoTemplates,
@@ -375,6 +376,15 @@ export function useKaneoCreateTab(options: {
         enabledSkills,
         existing,
         agentId: selectedEngineId ?? undefined,
+        // Repo facts for the assistant rules + structured context:
+        // manifest flow passes the already-fetched bootstrap manifest (its
+        // bound project is the selection there); legacy flow tries the
+        // GitLab integration for the chosen project (null-degrading).
+        manifest: manifest?.identity.project?.id === project.id ? manifest : null,
+        repoIntegration:
+          manifest?.identity.project?.id === project.id
+            ? undefined
+            : await fetchKaneoProjectRepo(baseUrl.trim(), keyNow, project.id),
       });
 
       // One-shot plaintext hand-off to the backend (rotation = same PUT).

@@ -29,6 +29,7 @@ import type { Assistant } from '@/common/types/agent/assistantTypes';
 import {
   type KaneoConfigPackage,
   type KaneoTemplates,
+  type KaneoProjectRepo,
   fetchKaneoConfigPackage,
   fetchKaneoTemplates,
   skillAppliesToRole,
@@ -37,6 +38,8 @@ import {
 import { type KaneoEnvironmentManifest, isManifestVersionNewer, primaryRepository } from './kaneoManifest';
 import {
   type KaneoContext,
+  type KaneoRepoIntegration,
+  type KaneoContextRepository,
   contextFromManifest,
   getKaneoContexts,
   newKaneoContextId,
@@ -182,6 +185,34 @@ export function renderProjectEnvironmentSegment(manifest: KaneoEnvironmentManife
     lines.push(
       `Note: this Kaneo instance reports environment manifest v${manifest.manifestVersion}; some newer environment details may not be shown here.`
     );
+  }
+  lines.push('');
+  lines.push(KANEO_ENV_SEGMENT_END);
+  return lines.join('\n');
+}
+
+/**
+ * Render a repository-only environment segment from GitLab-integration
+ * facts (used when no bootstrap manifest exists). Renders the repository
+ * section only — the task status machine is manifest-sourced and is never
+ * fabricated here. Deterministic for a given repo payload.
+ */
+export function renderRepoIntegrationSegment(repo: KaneoProjectRepo): string {
+  const lines: string[] = [];
+  lines.push(KANEO_ENV_SEGMENT_START);
+  lines.push('## Project environment');
+  lines.push('');
+  lines.push(
+    `**Repository:** ${repo.type} ${repo.repositoryOwner}/${repo.repositoryName}` +
+      (repo.cloneUrl ? ` (clone URL: ${repo.cloneUrl}).` : '.')
+  );
+  if (repo.cloneUrl) {
+    lines.push(
+      'Clone it into this workspace if no checkout exists yet, and never clone repositories outside this project.'
+    );
+  }
+  if (repo.branchPattern) {
+    lines.push(`Branch pattern reported by the project integration: \`${repo.branchPattern}\`.`);
   }
   lines.push('');
   lines.push(KANEO_ENV_SEGMENT_END);
@@ -796,6 +827,14 @@ export type KaneoExplicitBindingOptions = {
   existing: Assistant[];
   /** Explicit agent engine chosen in the tab; falls back to the first managed agent. */
   agentId?: string;
+  /**
+   * Bootstrap manifest when the instance ships the endpoint (the tab has
+   * already fetched it at connect time). Enables the rendered project
+   * environment segment and envHash drift tracking.
+   */
+  manifest?: KaneoEnvironmentManifest | null;
+  /** GitLab-integration repo facts fetched for the bound project, if any. */
+  repoIntegration?: KaneoProjectRepo | null;
 };
 
 /**
@@ -805,20 +844,36 @@ export type KaneoExplicitBindingOptions = {
  * Unlike the manifest sync this does not require a bootstrap manifest:
  * real Kaneo instances expose roles via `/api/agent/agents-config/*` and
  * projects via `/api/team` + `/api/project?teamId=...`, so the user binds
- * a role to a chosen project in the UI. The created context follows the
- * same upsert semantics as manifest sync (never duplicates a binding),
- * allocates the per-project per-role workspace, and writes role rules
- * without the project environment segment (no manifest is available).
+ * a role to a chosen project in the UI. When the caller passes the
+ * manifest (and/or GitLab-integration repo facts), the project
+ * environment segment is rendered into the role rules and the repo facts
+ * are persisted structuredly on the context (envHash drift tracking
+ * included). Without them the rules stay role-only and the context
+ * keeps any previously stored repo facts (null erases nothing).
  */
 export async function syncKaneoAssistantForBinding(
   options: KaneoExplicitBindingOptions
 ): Promise<KaneoExplicitBindingResult> {
-  const { baseUrl, project, role, agentsMd, description, enabledSkills, existing, agentId } = options;
+  const { baseUrl, project, role, agentsMd, description, enabledSkills, existing, agentId, manifest, repoIntegration } =
+    options;
   if (!agentsMd.trim()) {
     throw new Error(`Role "${role}" has no AGENTS.md in the Kaneo config package`);
   }
   const trimmedBase = baseUrl.trim().replace(/\/+$/, '');
   const workspace = await allocateKaneoWorkspace(project.slug, role);
+
+  // Rules content: role AGENTS.md plus, when repo facts are available, the
+  // rendered project environment segment (replacing any prior segment). A
+  // manifest renders the full segment; GitLab-integration facts render the
+  // repository section only (no status machine — that is manifest-sourced).
+  // Without either, rules stay role-only (an earlier segment, if any, is
+  // left in place — idempotent re-create must not lose manifest-sourced text).
+  let rules = agentsMd;
+  if (manifest) {
+    rules = appendEnvironmentSegment(agentsMd, renderProjectEnvironmentSegment(manifest));
+  } else if (repoIntegration) {
+    rules = appendEnvironmentSegment(agentsMd, renderRepoIntegrationSegment(repoIntegration));
+  }
   const name = kaneoProjectAssistantName(project.name, role);
   const rolePrompt = buildClaimPrompt(role, trimmedBase);
 
@@ -849,7 +904,7 @@ export async function syncKaneoAssistantForBinding(
       custom_skill_names: enabledSkills,
       prompts: [rolePrompt],
     });
-    await writeAssistantRule(created.id, agentsMd);
+    await writeAssistantRule(created.id, rules);
     return created;
   };
 
@@ -864,7 +919,7 @@ export async function syncKaneoAssistantForBinding(
         custom_skill_names: enabledSkills,
         recommended_prompts: [rolePrompt],
       });
-      await writeAssistantRule(existingAssistant.id, agentsMd);
+      await writeAssistantRule(existingAssistant.id, rules);
       assistantId = existingAssistant.id;
       status = 'updated';
     } catch (updateError) {
@@ -884,6 +939,27 @@ export async function syncKaneoAssistantForBinding(
   }
 
   // Gateway context: stable identity for credentials + session MCP env-ref.
+  // Repo facts: manifest-sourced repositories win; GitLab-integration facts
+  // fill in when no manifest exists. Both are persisted structuredly so
+  // later flows (reconnect, drift checks) need no refetch.
+  const manifestSummary = manifest
+    ? { envHash: manifest.envHash, manifestVersion: manifest.manifestVersion }
+    : (previousContext?.manifestSummary ?? null);
+  const repositories: KaneoContextRepository[] | null = manifest
+    ? [...manifest.repositories]
+    : (previousContext?.repositories ?? null);
+  const contextRepoIntegration: KaneoRepoIntegration | null = repoIntegration
+    ? {
+        type: repoIntegration.type,
+        source: 'vcs-integration',
+        baseUrl: trimmedBase,
+        repositoryOwner: repoIntegration.repositoryOwner,
+        repositoryName: repoIntegration.repositoryName,
+        cloneUrl: repoIntegration.cloneUrl || null,
+        branchPattern: repoIntegration.branchPattern,
+      }
+    : (previousContext?.repoIntegration ?? null);
+
   const baseContext: KaneoContext = previousContext ?? {
     id: newKaneoContextId(),
     baseUrl: trimmedBase,
@@ -894,12 +970,17 @@ export async function syncKaneoAssistantForBinding(
     workspace: null,
     assistantId: null,
     manifestSummary: null,
+    repositories: null,
+    repoIntegration: null,
     keyExpiresAt: null,
     degraded: false,
     degradedReason: null,
   };
   const { context, created: createdContext } = await upsertKaneoContext({
     ...baseContext,
+    manifestSummary,
+    repositories,
+    repoIntegration: contextRepoIntegration,
     assistantId,
     workspace,
   });

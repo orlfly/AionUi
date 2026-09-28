@@ -171,7 +171,7 @@ describe('syncKaneoAssistantForBinding', () => {
     expect(calls.created[1]['name']).toBe('Kaneo · Kaneo · coding');
     const contexts = getKaneoContexts();
     expect(contexts).toHaveLength(2);
-    expect(contexts.map((c) => c.projectId).sort()).toEqual(['proj-1', 'proj-2']);
+    expect(contexts.map((c) => c.projectId).toSorted()).toEqual(['proj-1', 'proj-2']);
   });
 
   it('updates an existing (role, project) instance in place instead of duplicating', async () => {
@@ -196,5 +196,127 @@ describe('syncKaneoAssistantForBinding', () => {
       /no AGENTS\.md/
     );
     expect(calls.created).toHaveLength(0);
+  });
+
+  it('renders the manifest environment segment and persists repo facts + envHash when a manifest is passed', async () => {
+    stubFetch();
+    const manifest = {
+      manifestVersion: 1,
+      generatedAt: '2026-01-01T00:00:00Z',
+      envHash: 'hash-abc',
+      identity: {
+        agentRole: 'coding',
+        project: { id: 'proj-1', teamId: 't1', name: 'AionUi', slug: 'aionui', description: null },
+        server: { baseUrl: 'http://kaneo' },
+      },
+      repositories: [
+        {
+          id: 'r1',
+          role: 'primary',
+          type: 'gitlab',
+          owner: 'aion',
+          name: 'ui',
+          cloneUrl: 'https://gitlab.com/aion/ui.git',
+          defaultBranch: 'main',
+          isActive: true,
+        },
+      ],
+      workflow: { statuses: ['todo', 'in-review'] },
+    } as const;
+
+    const result = await syncKaneoAssistantForBinding({ ...BINDING_BASE, existing: [], manifest });
+
+    // Rules carry the rendered segment alongside the role AGENTS.md.
+    expect(calls.rules[0]?.content).toContain('CODING-AGENTS-MD-BODY');
+    expect(calls.rules[0]?.content).toContain('<!-- kaneo-project-environment -->');
+    expect(calls.rules[0]?.content).toContain('https://gitlab.com/aion/ui.git');
+    expect(calls.rules[0]?.content).toContain('The default branch is `main`.');
+
+    // Structured repo facts + envHash fingerprint are persisted on the context.
+    const contexts = getKaneoContexts();
+    expect(contexts[0]?.manifestSummary).toEqual({ envHash: 'hash-abc', manifestVersion: 1 });
+    expect(contexts[0]?.repositories).toHaveLength(1);
+    expect(contexts[0]?.repositories?.[0]).toMatchObject({
+      role: 'primary',
+      owner: 'aion',
+      name: 'ui',
+      cloneUrl: 'https://gitlab.com/aion/ui.git',
+      defaultBranch: 'main',
+    });
+    expect(result.contextId).toBe(contexts[0]?.id);
+  });
+
+  it('renders a repo-only segment from GitLab integration facts and persists them when no manifest exists', async () => {
+    stubFetch();
+    const result = await syncKaneoAssistantForBinding({
+      ...BINDING_BASE,
+      existing: [],
+      repoIntegration: {
+        type: 'gitlab',
+        cloneUrl: 'https://gitlab.example/aion/ui.git',
+        repositoryOwner: 'aion',
+        repositoryName: 'ui',
+        branchPattern: 'feat/*',
+      },
+    });
+
+    expect(calls.rules[0]?.content).toContain('CODING-AGENTS-MD-BODY');
+    expect(calls.rules[0]?.content).toContain('<!-- kaneo-project-environment -->');
+    expect(calls.rules[0]?.content).toContain('gitlab aion/ui');
+    expect(calls.rules[0]?.content).toContain('https://gitlab.example/aion/ui.git');
+    expect(calls.rules[0]?.content).toContain('`feat/*`');
+    // Status machine is manifest-sourced and never fabricated here.
+    expect(calls.rules[0]?.content).not.toContain('Task status machine');
+
+    const contexts = getKaneoContexts();
+    expect(contexts[0]?.manifestSummary).toBeNull();
+    expect(contexts[0]?.repoIntegration).toMatchObject({
+      type: 'gitlab',
+      source: 'vcs-integration',
+      repositoryOwner: 'aion',
+      repositoryName: 'ui',
+      cloneUrl: 'https://gitlab.example/aion/ui.git',
+      branchPattern: 'feat/*',
+    });
+    expect(result.contextId).toBe(contexts[0]?.id);
+  });
+
+  it('without repo facts, keeps any previously stored repo facts on the context', async () => {
+    stubFetch();
+    const manifest = {
+      manifestVersion: 1,
+      generatedAt: '2026-01-01T00:00:00Z',
+      envHash: 'hash-abc',
+      identity: {
+        agentRole: 'coding',
+        project: { id: 'proj-1', teamId: 't1', name: 'AionUi', slug: 'aionui', description: null },
+        server: { baseUrl: 'http://kaneo' },
+      },
+      repositories: [
+        {
+          id: 'r1',
+          role: 'primary',
+          type: 'gitlab',
+          owner: 'aion',
+          name: 'ui',
+          cloneUrl: 'https://gitlab.com/aion/ui.git',
+          defaultBranch: null,
+          isActive: true,
+        },
+      ],
+      workflow: { statuses: ['todo', 'in-review'] },
+    } as const;
+    const first = await syncKaneoAssistantForBinding({ ...BINDING_BASE, existing: [], manifest });
+    expect(getKaneoContexts()[0]?.repositories).toHaveLength(1);
+
+    // A later sync without any repo facts must not erase stored facts.
+    await syncKaneoAssistantForBinding({
+      ...BINDING_BASE,
+      existing: [mkAssistant(first.assistantId, 'Kaneo · AionUi · coding')],
+    });
+    const after = getKaneoContexts();
+    expect(after).toHaveLength(1);
+    expect(after[0]?.repositories).toHaveLength(1);
+    expect(after[0]?.manifestSummary).toEqual({ envHash: 'hash-abc', manifestVersion: 1 });
   });
 });
