@@ -421,7 +421,18 @@ export function useAcpConfigOptions({
       }
       if (message.type === 'agent_status') {
         const statusPayload = message.data as { status?: string } | undefined;
-        if (statusPayload?.status === 'session_active') void reload().catch(() => {});
+        // `connected`/`authenticated` arrive before `session/load` completes, so
+        // they may still reflect the agent-level preloaded catalog (shared per
+        // CLI agent, whose `currentValue` can leak another conversation's
+        // model). Reloading on each transition — and again on `session_active` —
+        // lets the post-`session/load` snapshot replace that preload.
+        if (
+          statusPayload?.status === 'session_active' ||
+          statusPayload?.status === 'authenticated' ||
+          statusPayload?.status === 'connected'
+        ) {
+          void reload().catch(() => {});
+        }
       }
     };
     return ipcBridge.acpConversation.responseStream.on(handler);

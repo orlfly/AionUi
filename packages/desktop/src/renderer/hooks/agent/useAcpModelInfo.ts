@@ -54,6 +54,47 @@ function sameModelInfo(a: AcpModelInfo | null, b: AcpModelInfo | null): boolean 
   );
 }
 
+/**
+ * Models this conversation explicitly switched to during its lifetime, keyed by
+ * conversation id.
+ *
+ * The model catalog is shared per CLI agent, so an untouched catalog
+ * `currentValue` can be whatever the LAST session of this agent wrote back —
+ * switching conversations of the same agent would otherwise surface that leaked
+ * model (often the default provider) instead of this conversation's own
+ * persisted choice. Once the user switches here, the catalog value IS this
+ * conversation's truth again. Conversation-scoped and shared, so every picker
+ * mounted on the same conversation agrees.
+ */
+const localModelSelectionByConversation = new Map<string, string>();
+const localModelSelectionListeners = new Map<string, Set<(modelId: string | null) => void>>();
+
+function getLocalModelSelection(conversation_id: string): string | null {
+  return localModelSelectionByConversation.get(conversation_id) ?? null;
+}
+
+function setLocalModelSelection(conversation_id: string, modelId: string | null): void {
+  if (modelId === null) localModelSelectionByConversation.delete(conversation_id);
+  else localModelSelectionByConversation.set(conversation_id, modelId);
+  localModelSelectionListeners.get(conversation_id)?.forEach((listener) => listener(modelId));
+}
+
+function subscribeLocalModelSelection(conversation_id: string, listener: (modelId: string | null) => void): () => void {
+  const listeners = localModelSelectionListeners.get(conversation_id) ?? new Set<(modelId: string | null) => void>();
+  listeners.add(listener);
+  localModelSelectionListeners.set(conversation_id, listeners);
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) localModelSelectionListeners.delete(conversation_id);
+  };
+}
+
+/** Test hook: clears every conversation's local selection. */
+export function resetLocalModelSelectionForTests(): void {
+  localModelSelectionByConversation.clear();
+  localModelSelectionListeners.clear();
+}
+
 function normalizeInitialModel(info: AcpModelInfo, initialModelId?: string): AcpModelInfo {
   if (!initialModelId || info.current_model_id) return info;
   const match = info.available_models.find((model) => model.id === initialModelId);
@@ -86,10 +127,27 @@ export const useAcpModelInfo = ({
   const { model, thoughtLevel, setStatus, setConfigOption, isLoading } = runtimeConfig;
   const isConfigOptionBlocked = runtimeConfig.isConfigOptionBlocked ?? (() => false);
   const [legacyModelInfo, setLegacyModelInfo] = useState<AcpModelInfo | null>(null);
+  const [locallySelectedModelId, setLocallySelectedModelIdState] = useState<string | null>(() =>
+    getLocalModelSelection(conversation_id)
+  );
+  const setLocallySelectedModelId = useCallback(
+    (modelId: string | null) => {
+      setLocalModelSelection(conversation_id, modelId);
+      setLocallySelectedModelIdState(modelId);
+    },
+    [conversation_id]
+  );
+
+  // In-conversation switches are scoped to this conversation; drop them if the
+  // hook is ever reused for a different one.
+  useEffect(() => {
+    setLocallySelectedModelIdState(getLocalModelSelection(conversation_id));
+    return subscribeLocalModelSelection(conversation_id, setLocallySelectedModelIdState);
+  }, [conversation_id]);
 
   const configModelInfo = useMemo<AcpModelInfo | null>(() => {
     if (!model) return null;
-    const currentModelId = model.currentValue || initialModelId || null;
+    const currentModelId = locallySelectedModelId || initialModelId || model.currentValue || null;
     return {
       current_model_id: currentModelId,
       current_model_label: model.options.find((item) => item.value === currentModelId)?.label || currentModelId || null,
@@ -99,7 +157,7 @@ export const useAcpModelInfo = ({
         description: item.description ?? undefined,
       })),
     };
-  }, [initialModelId, model]);
+  }, [initialModelId, locallySelectedModelId, model]);
   const persistedModelInfo = useMemo<AcpModelInfo | null>(() => {
     if (!initialModelId) return null;
     return {
@@ -148,7 +206,10 @@ export const useAcpModelInfo = ({
       // the opposite of what happened.
       void setConfigOption(model.id, model_id)
         .then(
-          () => onSelectModelSuccess?.(model_id),
+          () => {
+            setLocallySelectedModelId(model_id);
+            onSelectModelSuccess?.(model_id);
+          },
           (error) => onSelectModelFailed?.(model_id, error)
         )
         // Best-effort: swallow anything the callbacks themselves throw. It cannot
@@ -156,7 +217,7 @@ export const useAcpModelInfo = ({
         // escape would surface as an unhandled rejection.
         .catch(() => {});
     },
-    [enabled, model, onSelectModelFailed, onSelectModelSuccess, setConfigOption]
+    [enabled, model, locallySelectedModelId, onSelectModelFailed, onSelectModelSuccess, setConfigOption]
   );
 
   return {

@@ -10,7 +10,7 @@ import { SWRConfig } from 'swr';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import type { AcpConfigOptionDto, AcpModelInfo } from '@/common/types/platform/acpTypes';
-import { useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfo';
+import { resetLocalModelSelectionForTests, useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfo';
 import { resetEnsureConversationRuntimeStateForTests } from '@/renderer/pages/conversation/utils/ensureConversationRuntime';
 
 const { ensureRuntimeInvokeMock, setConfigOptionInvokeMock, responseStreamHandlers } = vi.hoisted(() => ({
@@ -115,6 +115,7 @@ describe('useAcpModelInfo', () => {
     vi.clearAllMocks();
     responseStreamHandlers.length = 0;
     resetEnsureConversationRuntimeStateForTests();
+    resetLocalModelSelectionForTests();
     ensureRuntimeInvokeMock.mockReset();
     setConfigOptionInvokeMock.mockReset();
     ensureRuntimeInvokeMock.mockResolvedValue({ recovered: true, config_options: buildConfigOptions(), runtime: null });
@@ -134,18 +135,37 @@ describe('useAcpModelInfo', () => {
     const { result } = renderUseAcpModelInfo({
       conversation_id: 'conv-1',
       backend: 'claude',
+      // The conversation persisted its own choice; the shared per-agent catalog
+      // reports another session's model (opus-4) and must NOT win.
       initialModelId: 'sonnet-4',
     });
 
     expect(result.current.isRuntimeReady).toBe(false);
 
     await waitFor(() => {
-      expect(result.current.model_info?.current_model_id).toBe('opus-4');
+      expect(result.current.model_info?.current_model_id).toBe('sonnet-4');
     });
     expect(result.current.isRuntimeReady).toBe(true);
     expect(result.current.model_info?.available_models.map((model) => model.id)).toEqual(['sonnet-4', 'opus-4']);
     expect(result.current.canSwitch).toBe(true);
     expect(ensureRuntimeInvokeMock).toHaveBeenCalledWith({ conversation_id: 'conv-1' });
+  });
+
+  it('does not leak another conversation of the same agent into the picker when this conversation has no persisted model', async () => {
+    ensureRuntimeInvokeMock.mockResolvedValue({
+      recovered: true,
+      config_options: buildConfigOptions('opus-4'),
+      runtime: null,
+    });
+
+    const { result } = renderUseAcpModelInfo({
+      conversation_id: 'conv-1',
+      backend: 'claude',
+    });
+
+    await waitFor(() => {
+      expect(result.current.model_info?.current_model_id).toBe('opus-4');
+    });
   });
 
   it('uses an injected config option loader without starting standalone runtime', async () => {
@@ -243,9 +263,11 @@ describe('useAcpModelInfo', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.model_info?.current_model_id).toBe('opus-4');
+      expect(result.current.isRuntimeReady).toBe(true);
     });
-    expect(result.current.isRuntimeReady).toBe(true);
+    // The conversation's persisted choice wins even after the shared catalog
+    // loads another session's model.
+    expect(result.current.model_info?.current_model_id).toBe('sonnet-4');
     expect(result.current.isLoading).toBe(false);
   });
 
@@ -273,9 +295,10 @@ describe('useAcpModelInfo', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.model_info?.current_model_id).toBe('opus-4');
       expect(result.current.canSwitch).toBe(true);
     });
+    // Persisted choice wins over the shared catalog value.
+    expect(result.current.model_info?.current_model_id).toBe('sonnet-4');
   });
 
   it('does not mark a new conversation ready when the previous runtime load resolves late', async () => {
@@ -530,6 +553,33 @@ describe('useAcpModelInfo', () => {
       expect(second.result.current.canSwitch).toBe(true);
     });
     expect(ensureRuntimeInvokeMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('a local switch overrides the persisted model for the rest of the conversation', async () => {
+    ensureRuntimeInvokeMock.mockResolvedValue({
+      recovered: true,
+      config_options: buildConfigOptions('opus-4'),
+      runtime: null,
+    });
+
+    const { result } = renderUseAcpModelInfo({
+      conversation_id: 'conv-1',
+      backend: 'claude',
+      initialModelId: 'sonnet-4',
+    });
+
+    await waitFor(() => {
+      expect(result.current.canSwitch).toBe(true);
+    });
+    expect(result.current.model_info?.current_model_id).toBe('sonnet-4');
+
+    act(() => {
+      result.current.selectModel('opus-4');
+    });
+
+    await waitFor(() => {
+      expect(result.current.model_info?.current_model_id).toBe('opus-4');
+    });
   });
 
   it('uses legacy acp_model_info stream only before config options are available', async () => {
