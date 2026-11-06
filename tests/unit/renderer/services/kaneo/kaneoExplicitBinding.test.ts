@@ -84,7 +84,11 @@ const store = vi.hoisted(() => {
   };
 });
 
-import { getKaneoContexts, setKaneoContexts } from '@/renderer/services/kaneo/kaneoContexts';
+import {
+  getKaneoContexts,
+  kaneoInstanceWorkspaceSegment,
+  setKaneoContexts,
+} from '@/renderer/services/kaneo/kaneoContexts';
 import { syncKaneoAssistantForBinding } from '@/renderer/services/kaneo/kaneoSync';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 
@@ -189,6 +193,49 @@ describe('syncKaneoAssistantForBinding', () => {
     expect(calls.created).toHaveLength(1); // only the first create
     expect(calls.updated).toHaveLength(1);
     expect(getKaneoContexts().length).toBe(before); // context reused, not duplicated
+  });
+
+  it('creates parallel instances for one role and project with distinct names, workspaces and contexts', async () => {
+    stubFetch();
+    const first = await syncKaneoAssistantForBinding({ ...BINDING_BASE, existing: [] });
+    const instanceId = 'inst-extra-1';
+    const instanceLabel = 'Feature X';
+    const second = await syncKaneoAssistantForBinding({
+      ...BINDING_BASE,
+      instanceId,
+      instanceLabel,
+      existing: [mkAssistant(first.assistantId, 'Kaneo · AionUi · coding')],
+    });
+
+    expect(second.status).toBe('created');
+    expect(second.assistantId).not.toBe(first.assistantId);
+    expect(calls.created).toHaveLength(2);
+    expect(calls.created[1]).toMatchObject({ name: 'Kaneo · AionUi · coding · Feature X' });
+    expect(calls.workspaces[1]).toEqual({
+      project_slug: 'aionui',
+      role: kaneoInstanceWorkspaceSegment('coding', instanceId, instanceLabel),
+    });
+
+    const contexts = getKaneoContexts();
+    expect(contexts).toHaveLength(2);
+    expect(contexts.map((c) => c.instanceId ?? null).toSorted()).toEqual([null, instanceId].toSorted());
+    const createdContext = contexts.find((c) => c.instanceId === instanceId);
+    expect(createdContext).toMatchObject({ instanceLabel, assistantId: second.assistantId });
+    expect(createdContext?.workspace).not.toBe(getKaneoContexts()[0]?.workspace);
+
+    // Re-creating the same instance id updates it rather than adding a third.
+    const updated = await syncKaneoAssistantForBinding({
+      ...BINDING_BASE,
+      instanceId,
+      instanceLabel,
+      existing: [
+        mkAssistant(first.assistantId, 'Kaneo · AionUi · coding'),
+        mkAssistant(second.assistantId, 'Kaneo · AionUi · coding · Feature X'),
+      ],
+    });
+    expect(updated.status).toBe('updated');
+    expect(updated.assistantId).toBe(second.assistantId);
+    expect(getKaneoContexts()).toHaveLength(2);
   });
 
   it('rejects a role without AGENTS.md content', async () => {

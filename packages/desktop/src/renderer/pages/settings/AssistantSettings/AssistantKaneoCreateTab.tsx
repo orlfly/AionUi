@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Alert, Button, Input, Select } from '@arco-design/web-react';
-import { Info } from '@icon-park/react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { KaneoCreateTabController } from './useKaneoCreateTab';
@@ -207,6 +206,14 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
                       {role.description && (
                         <div className='mt-2px line-clamp-2 text-11px text-t-tertiary'>{role.description}</div>
                       )}
+                      {role.instanceCount > 0 && (
+                        <div className='mt-2px text-10px text-t-tertiary'>
+                          {t('settings.kaneoCreateTab.instanceCount', {
+                            defaultValue: '{{count}} instance(s)',
+                            count: role.instanceCount,
+                          })}
+                        </div>
+                      )}
                       <div className='mt-4px text-10px text-warning-8'>
                         {t('settings.kaneoCreateTab.roleUnavailableHint')}
                       </div>
@@ -233,6 +240,14 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
                       {role.description && (
                         <div className='mt-2px line-clamp-2 text-11px text-t-tertiary'>{role.description}</div>
                       )}
+                      {role.instanceCount > 0 && (
+                        <div className='mt-2px text-10px text-t-tertiary'>
+                          {t('settings.kaneoCreateTab.instanceCount', {
+                            defaultValue: '{{count}} instance(s)',
+                            count: role.instanceCount,
+                          })}
+                        </div>
+                      )}
                       {selected && (
                         <div className='mt-4px text-10px text-primary-6'>
                           {t('settings.kaneoCreateTab.roleSelectedHint', { defaultValue: 'Bound to this assistant' })}
@@ -253,7 +268,9 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
           </div>
 
           <div className='flex flex-col gap-6px'>
-            <div className='text-13px font-500 text-t-secondary'>{t('settings.kaneoCreateTab.enginesTitle', { defaultValue: 'Agent engine' })}</div>
+            <div className='text-13px font-500 text-t-secondary'>
+              {t('settings.kaneoCreateTab.enginesTitle', { defaultValue: 'Agent engine' })}
+            </div>
             <Select
               value={kaneo.selectedEngineId ?? undefined}
               onChange={(value: string) => kaneo.selectEngine(value)}
@@ -295,6 +312,77 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
           </div>
 
           {kaneo.selectedRole && kaneo.selectedProjectId && (
+            <div className='flex flex-col gap-6px' data-testid='section-kaneo-instance'>
+              <div className='text-13px font-500 text-t-secondary'>
+                {t('settings.kaneoCreateTab.instanceTitle', { defaultValue: 'Assistant instance' })}
+              </div>
+              {kaneo.existingInstances.length > 0 ? (
+                <>
+                  <Select
+                    value={kaneo.instanceTarget}
+                    onChange={(value: string) => kaneo.selectInstanceTarget(value)}
+                    disabled={kaneo.creating}
+                    data-testid='select-kaneo-instance-target'
+                  >
+                    <Select.Option value='new'>
+                      {t('settings.kaneoCreateTab.newInstanceOption', {
+                        defaultValue: 'Create a new parallel instance',
+                      })}
+                    </Select.Option>
+                    {kaneo.existingInstances.map((instance) => (
+                      <Select.Option key={instance.contextId} value={instance.contextId}>
+                        {instance.assistantName}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  {kaneo.isUpdatingInstance ? (
+                    <Alert
+                      type='info'
+                      content={t('settings.kaneoCreateTab.updateInstanceHint', {
+                        defaultValue: 'Updates the selected instance in place; its workspace is preserved.',
+                      })}
+                    />
+                  ) : (
+                    <>
+                      <Input
+                        value={kaneo.instanceLabel}
+                        onChange={kaneo.setInstanceLabel}
+                        placeholder={t('settings.kaneoCreateTab.instanceNamePlaceholder', {
+                          defaultValue: 'Instance name (optional), e.g. {{suggested}}',
+                          suggested: kaneo.defaultInstanceLabel ?? 'feature-x',
+                        })}
+                        disabled={kaneo.creating}
+                        data-testid='input-kaneo-instance-label'
+                      />
+                      <div className='text-11px text-t-tertiary'>
+                        {t('settings.kaneoCreateTab.newInstanceHint', {
+                          defaultValue:
+                            'Creates another assistant for this role in a new workspace directory, so both can work in parallel.',
+                        })}
+                      </div>
+                      {kaneo.instanceNameConflict && (
+                        <Alert
+                          type='error'
+                          content={t('settings.kaneoCreateTab.instanceNameConflict', {
+                            defaultValue: 'This instance name is already used for the role and project.',
+                          })}
+                          data-testid='alert-kaneo-instance-name-conflict'
+                        />
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className='text-11px text-t-tertiary'>
+                  {t('settings.kaneoCreateTab.firstInstanceHint', {
+                    defaultValue: 'Creates the first assistant for this role and project.',
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {kaneo.selectedRole && kaneo.selectedProjectId && (
             <div
               className='flex flex-col gap-6px rounded-8px bg-fill-1 p-10px'
               data-testid='section-kaneo-create-preview'
@@ -315,10 +403,6 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
                   style={{ marginBottom: 0 }}
                 />
               )}
-              <div className='flex items-center gap-6px text-12px text-t-secondary'>
-                <Info size={14} theme='outline' fill='currentColor' />
-                <span>{t('settings.kaneoCreateTab.updateHint')}</span>
-              </div>
             </div>
           )}
 
@@ -333,7 +417,11 @@ const AssistantKaneoCreateTab: React.FC<AssistantKaneoCreateTabProps> = ({
               loading={kaneo.creating}
               data-testid='btn-kaneo-create-assistant'
             >
-              {t('settings.kaneoCreateTab.createButton')}
+              {kaneo.isUpdatingInstance
+                ? t('settings.kaneoCreateTab.updateButton', { defaultValue: 'Update instance' })
+                : kaneo.existingInstances.length > 0
+                  ? t('settings.kaneoCreateTab.createNewButton', { defaultValue: 'Create new instance' })
+                  : t('settings.kaneoCreateTab.createButton')}
             </Button>
           </div>
         </div>

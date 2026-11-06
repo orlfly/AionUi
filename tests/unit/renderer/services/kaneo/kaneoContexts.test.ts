@@ -147,6 +147,30 @@ describe('upsert and context bookkeeping', () => {
     expect(store.values.get('kaneo.contexts')).toHaveLength(2);
   });
 
+  it('keeps parallel instances of the same (baseUrl, projectId, role) apart', async () => {
+    const primary = contextFromManifest(MANIFEST, 'http://kaneo');
+    await upsertKaneoContext({ ...primary, assistantId: 'a1' });
+    const extra = {
+      ...contextFromManifest(MANIFEST, 'http://kaneo'),
+      instanceId: 'inst-2',
+      instanceLabel: 'Instance 2',
+    };
+    const { created } = await upsertKaneoContext(extra);
+
+    expect(created).toBe(true);
+    expect(store.values.get('kaneo.contexts')).toHaveLength(2);
+
+    // Same instance id merges in place instead of adding a third context.
+    const reconnect = {
+      ...contextFromManifest(MANIFEST, 'http://kaneo'),
+      instanceId: 'inst-2',
+      instanceLabel: 'Instance 2',
+    };
+    const merged = await upsertKaneoContext(reconnect);
+    expect(merged.created).toBe(false);
+    expect(store.values.get('kaneo.contexts')).toHaveLength(2);
+  });
+
   it('removeKaneoContext clears the active pointer when it pointed at the removed context', async () => {
     const context = contextFromManifest(MANIFEST, 'http://kaneo');
     await upsertKaneoContext(context);
@@ -188,6 +212,18 @@ describe('filterAssistantsForKaneoContext', () => {
     expect(ids).toContain('a4'); // legacy Kaneo assistant
     expect(ids).toContain('a5'); // non-Kaneo assistant
     expect(ids).not.toContain('a2'); // other role, same project
+  });
+
+  it('keeps every parallel instance of the bound role visible', () => {
+    const withParallel = [
+      ...assistants,
+      mkAssistant('a6', kaneoProjectAssistantName('Aion UI', 'coding', 'Instance 2')),
+    ];
+    const filtered = filterAssistantsForKaneoContext(withParallel, { projectName: 'Aion UI', agentRole: 'coding' });
+    const ids = filtered.map((a) => a.id);
+    expect(ids).toContain('a1');
+    expect(ids).toContain('a6');
+    expect(ids).not.toContain('a2');
   });
 
   it('applies the legacy role filter when the active context has no project', () => {

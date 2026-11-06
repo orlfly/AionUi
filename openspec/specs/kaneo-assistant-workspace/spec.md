@@ -1,8 +1,10 @@
 ## Requirements
 
-### Requirement: Per-project per-role workspace allocation
+### Requirement: Per-project per-role-per-instance workspace allocation
 
 For every project-bound Kaneo context, the sync flow (triggered from the assistants home page's Kaneo tab or from reconnection/rotation in place) SHALL allocate a dedicated workspace directory at `<userData>/kaneo-workspaces/<projectSlug>/<role>/`, creating it (recursively) on sync if missing, and SHALL record the absolute path in the Kaneo context. The allocation entry point is the Kaneo tab (see `kaneo-assistant-create-tab`), not the retired standalone import modal. Kaneo project slugs are free-form text (any script); the backend maps each slug to a filesystem-safe directory name deterministically: ASCII slugs are used verbatim, and other slugs are folded to an escaped ASCII form, so a given slug always maps to the same directory and no slug can escape or traverse out of the `kaneo-workspaces` root.
+
+Additional parallel instances of the same (project, role) pair SHALL allocate a distinct directory segment (`<role>-<instanceLabel>-<token>`) under the same project directory, so each instance clones and works independently.
 
 #### Scenario: First sync from the Kaneo tab
 
@@ -13,6 +15,11 @@ For every project-bound Kaneo context, the sync flow (triggered from the assista
 
 - **WHEN** the same project is later synced for role `code-review` with a different key
 - **THEN** that assistant's workspace is `<userData>/kaneo-workspaces/aionui/code-review/`, distinct from the coding workspace
+
+#### Scenario: Parallel instances of the same role
+
+- **WHEN** a second `coding` instance is created for project `aionui`
+- **THEN** its workspace is a distinct directory under `<userData>/kaneo-workspaces/aionui/` (for example `coding-instance-2-<token>/`), and the first instance keeps its original directory
 
 #### Scenario: Non-ASCII project slug
 

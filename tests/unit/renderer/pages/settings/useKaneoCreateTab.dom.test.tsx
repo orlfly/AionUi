@@ -333,21 +333,105 @@ describe('useKaneoCreateTab', () => {
     expect(hook.result.current.lastResult?.status).toBe('created');
   });
 
+  it('creates a second parallel instance for the same role and project with its own workspace', async () => {
+    const primaryContext = {
+      id: 'ctx-primary',
+      baseUrl: 'http://localhost:1337',
+      agentRole: 'coding',
+      instanceId: null,
+      instanceLabel: null,
+      projectId: 'proj-1',
+      projectName: 'AionUi',
+      projectSlug: 'aionui',
+      workspace: '/ws/aionui/coding/',
+      assistantId: 'assistant-primary',
+      manifestSummary: null,
+      repositories: null,
+      repoIntegration: null,
+      keyExpiresAt: null,
+      degraded: false,
+      degradedReason: null,
+    };
+    await setKaneoContexts([primaryContext]);
+    const hook = renderHook(() =>
+      useKaneoCreateTab({ existing: [mkAssistant('assistant-primary', 'Kaneo · AionUi · coding')] })
+    );
+    await connectVia(hook);
+    await waitFor(() => expect(hook.result.current.projects.length).toBeGreaterThan(0));
+    act(() => hook.result.current.selectProject('proj-1'));
+    await act(async () => {});
+
+    expect(hook.result.current.existingInstances).toHaveLength(1);
+    expect(hook.result.current.defaultInstanceLabel).toBe('Instance 2');
+
+    act(() => hook.result.current.setInstanceLabel('Feature X'));
+    await act(async () => {
+      await hook.result.current.create();
+    });
+
+    expect(assistantsCreate).toHaveBeenCalledTimes(1);
+    expect(assistantsCreate.mock.calls[0]?.[0]).toMatchObject({ name: 'Kaneo · AionUi · coding · Feature X' });
+    const contexts = getKaneoContexts();
+    expect(contexts).toHaveLength(2);
+    const created = contexts.find((context) => context.instanceLabel === 'Feature X');
+    expect(created?.instanceId).toBeTruthy();
+    expect(created?.workspace).toBeTruthy();
+    expect(created?.workspace).not.toBe(primaryContext.workspace);
+  });
+
+  it('disables create when the instance name collides with an existing instance', async () => {
+    const extraContext = {
+      id: 'ctx-extra',
+      baseUrl: 'http://localhost:1337',
+      agentRole: 'coding',
+      instanceId: 'inst-extra',
+      instanceLabel: 'Feature X',
+      projectId: 'proj-1',
+      projectName: 'AionUi',
+      projectSlug: 'aionui',
+      workspace: '/ws/aionui/coding-feature-x-instextra/',
+      assistantId: 'assistant-extra',
+      manifestSummary: null,
+      repositories: null,
+      repoIntegration: null,
+      keyExpiresAt: null,
+      degraded: false,
+      degradedReason: null,
+    };
+    await setKaneoContexts([extraContext]);
+    const hook = renderHook(() =>
+      useKaneoCreateTab({
+        existing: [mkAssistant('assistant-extra', 'Kaneo · AionUi · coding · Feature X')],
+      })
+    );
+    await connectVia(hook);
+    await waitFor(() => expect(hook.result.current.projects.length).toBeGreaterThan(0));
+    act(() => hook.result.current.selectProject('proj-1'));
+    act(() => hook.result.current.setInstanceLabel('Feature X'));
+    await act(async () => {});
+
+    expect(hook.result.current.instanceNameConflict).toBe(true);
+    expect(hook.result.current.canCreate).toBe(false);
+  });
+
   it('does not re-fire the project load with an empty key after a successful create', async () => {
     const teamCalls: string[] = [];
     const previousFetch = globalThis.fetch;
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const auth = String(new Headers(init?.headers).get('Authorization') ?? '');
-      if (url.includes('/api/team')) {
-        teamCalls.push(auth);
-        if (auth !== 'Bearer k-key') {
-          return new Response('unauthorized', { status: 401 });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        const auth = String(new Headers(init?.headers).get('Authorization') ?? '');
+        if (url.includes('/api/team')) {
+          teamCalls.push(auth);
+          if (auth !== 'Bearer k-key') {
+            return new Response('unauthorized', { status: 401 });
+          }
+          return new Response(JSON.stringify({ success: true, data: [{ id: 'team-1' }] }), { status: 200 });
         }
-        return new Response(JSON.stringify({ success: true, data: [{ id: 'team-1' }] }), { status: 200 });
-      }
-      return previousFetch(input, init);
-    }) as unknown as typeof fetch);
+        return previousFetch(input, init);
+      }) as unknown as typeof fetch
+    );
     const hook = renderHook(() => useKaneoCreateTab({ existing: [] }));
     await connectVia(hook);
     await waitFor(() => expect(hook.result.current.projects.length).toBeGreaterThan(0));

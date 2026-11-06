@@ -6,10 +6,16 @@
 
 // Kaneo context store.
 //
-// A "context" is one imported Kaneo binding: (baseUrl, projectId, role). The
-// renderer persists contexts (no key material — keys live encrypted in the
-// main process, addressed by contextId) and an activeContextId pointer the
-// Guide uses to scope the assistant list and workspace preselection.
+// A "context" is one imported Kaneo binding: (baseUrl, projectId, role,
+// instance). The renderer persists contexts (no key material — keys live
+// encrypted in the main process, addressed by contextId) and an
+// activeContextId pointer the Guide uses to scope the assistant list and
+// workspace preselection.
+//
+// Multiple parallel instances may share the same (baseUrl, projectId, role):
+// e.g. two `coding` assistants for one project working in separate clone
+// directories. `instanceId` distinguishes them; the first/legacy instance has
+// `instanceId: null`.
 //
 // Migration: installs upgraded from the single-role model carry
 // `kaneo.activeRole` and no contexts; migrateKaneoContexts runs once (guarded
@@ -42,6 +48,14 @@ export type KaneoContext = {
   id: string;
   baseUrl: string;
   agentRole: string;
+  /**
+   * Distinguishes parallel instances of the same (baseUrl, projectId, role).
+   * Null/absent for the primary instance, including contexts created before
+   * multi-instance support.
+   */
+  instanceId?: string | null;
+  /** Human-readable instance label; null for the primary instance. */
+  instanceLabel?: string | null;
   /** Null for project-less (legacy/unbound) contexts. */
   projectId: string | null;
   projectName: string | null;
@@ -70,6 +84,35 @@ export function newKaneoContextId(): string {
   return `kctx-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Stable id for an additional assistant instance of one (role, project) pair. */
+export function newKaneoInstanceId(): string {
+  return `inst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/**
+ * Directory segment used for an instance's managed workspace. The primary
+ * instance keeps the historical `<role>` segment; extra instances append a
+ * readable label slug and a short token so two instances can never share a
+ * clone directory. The backend folds/validates the final segment.
+ */
+export function kaneoInstanceWorkspaceSegment(
+  role: string,
+  instanceId: string | null | undefined,
+  instanceLabel?: string | null
+): string {
+  if (!instanceId) return role;
+  const token = instanceId
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(-6);
+  const labelSlug = (instanceLabel ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 32);
+  return [role, labelSlug, token].filter(Boolean).join('-');
+}
+
 /** Build a context from a freshly fetched manifest (import or reconnect). */
 export function contextFromManifest(manifest: KaneoEnvironmentManifest, baseUrl: string): KaneoContext {
   const project = manifest.identity.project;
@@ -77,6 +120,8 @@ export function contextFromManifest(manifest: KaneoEnvironmentManifest, baseUrl:
     id: newKaneoContextId(),
     baseUrl,
     agentRole: manifest.identity.agentRole,
+    instanceId: null,
+    instanceLabel: null,
     projectId: project?.id ?? null,
     projectName: project?.name ?? null,
     projectSlug: project?.slug ?? null,
@@ -94,7 +139,13 @@ export function contextFromManifest(manifest: KaneoEnvironmentManifest, baseUrl:
 /** Read all contexts (empty array when none). */
 export function getKaneoContexts(): KaneoContext[] {
   const contexts = configService.get('kaneo.contexts');
-  return Array.isArray(contexts) ? contexts : [];
+  if (!Array.isArray(contexts)) return [];
+  // Normalize contexts persisted before multi-instance support.
+  return contexts.map((context) => ({
+    ...context,
+    instanceId: context.instanceId ?? null,
+    instanceLabel: context.instanceLabel ?? null,
+  }));
 }
 
 /** Write contexts back. */
@@ -124,9 +175,10 @@ export function getActiveKaneoContext(): KaneoContext | undefined {
 }
 
 /**
- * Upsert a context by (baseUrl, projectId, role). When an existing context
- * matches, it is updated in place (preserving id, assistantId, workspace and
- * credential binding) so rotation/reconnect never duplicates.
+ * Upsert a context by (baseUrl, projectId, role, instanceId). When an existing
+ * context matches, it is updated in place (preserving id, assistantId,
+ * workspace and credential binding) so rotation/reconnect never duplicates.
+ * Different instance ids create distinct contexts for the same role/project.
  */
 export async function upsertKaneoContext(context: KaneoContext): Promise<{ context: KaneoContext; created: boolean }> {
   const contexts = getKaneoContexts();
@@ -134,7 +186,8 @@ export async function upsertKaneoContext(context: KaneoContext): Promise<{ conte
     (c) =>
       c.baseUrl === context.baseUrl &&
       (c.projectId ?? null) === (context.projectId ?? null) &&
-      c.agentRole === context.agentRole
+      c.agentRole === context.agentRole &&
+      (c.instanceId ?? null) === (context.instanceId ?? null)
   );
   if (index >= 0) {
     const existing = contexts[index];
@@ -143,6 +196,7 @@ export async function upsertKaneoContext(context: KaneoContext): Promise<{ conte
       // Refreshable fields from a new manifest.
       projectName: context.projectName,
       projectSlug: context.projectSlug,
+      instanceLabel: context.instanceLabel ?? existing.instanceLabel ?? null,
       manifestSummary: context.manifestSummary,
       // Repo facts refresh with each sync; null keeps prior facts (explicit
       // binding without a manifest must not erase manifest-sourced facts).
@@ -202,6 +256,8 @@ export async function migrateKaneoContexts(): Promise<void> {
     id: newKaneoContextId(),
     baseUrl: '',
     agentRole: legacyRole,
+    instanceId: null,
+    instanceLabel: null,
     projectId: null,
     projectName: null,
     projectSlug: null,

@@ -47,19 +47,29 @@ For the selected role, the user SHALL explicitly bind it to a **specific Kaneo p
 - **WHEN** the user binds role `coordinator` to project `aionui` and creates the assistant
 - **THEN** a Kaneo context exists with `{ agentRole: 'coordinator', projectId: 'aionui', workspace: '<userData>/kaneo-workspaces/aionui/coordinator/' }` and the assistant references it
 
-### Requirement: One assistant instance per project per role
+### Requirement: Multiple parallel instances per project per role
 
-Each (role, project) pair SHALL surface as exactly one assistant instance in AionUi. Creating an instance for an already-bound pair SHALL re-open / update that existing assistant in place rather than duplicating it.
+Each (role, project) pair SHALL support one primary assistant instance plus any number of additional parallel instances. Every instance SHALL have its own assistant, Kaneo context, credential binding, and managed workspace directory so multiple assistants for the same role can work in parallel without sharing a checkout. The tab SHALL let the user either create a new parallel instance or explicitly select an existing instance to update in place.
 
 #### Scenario: Distinct instances per project
 
 - **WHEN** role `coding` is bound to project `aionui` and later to project `kaneo`
 - **THEN** two assistant instances exist, each carrying its own project binding and workspace
 
-#### Scenario: Duplicate guard
+#### Scenario: Parallel instances for one role and project
 
-- **WHEN** the user selects role `coding` for project `aionui` which already has an instance
-- **THEN** the tab indicates an existing instance for this role-project pair and creating updates that instance instead of creating a second one
+- **WHEN** the user creates a second instance for role `coding` and project `aionui`
+- **THEN** a new assistant named `Kaneo · aionui · coding · <instance label>` is created with a distinct context and workspace directory, while the first instance is left untouched
+
+#### Scenario: Update an existing instance
+
+- **WHEN** the user selects an existing instance in the instance picker and creates
+- **THEN** that instance (and only that instance) is updated in place and its workspace is preserved
+
+#### Scenario: Duplicate instance name guard
+
+- **WHEN** the user enters an instance name already used by another instance of the same role and project
+- **THEN** Create is disabled and the tab explains that the instance name is already used
 
 #### Scenario: Instances listed under their role
 

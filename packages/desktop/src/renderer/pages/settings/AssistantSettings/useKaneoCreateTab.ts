@@ -36,7 +36,12 @@ import {
   isManifestVersionNewer,
   type KaneoEnvironmentManifest,
 } from '@/renderer/services/kaneo/kaneoManifest';
-import { getKaneoContexts, updateKaneoContext } from '@/renderer/services/kaneo/kaneoContexts';
+import {
+  getKaneoContexts,
+  newKaneoInstanceId,
+  updateKaneoContext,
+  type KaneoContext,
+} from '@/renderer/services/kaneo/kaneoContexts';
 import {
   importKaneoSkill,
   kaneoProjectAssistantName,
@@ -56,7 +61,18 @@ export type KaneoRoleOption = {
   selectable: boolean;
   /** True when this (role, project) pair already has an assistant instance. */
   hasInstance: boolean;
+  /** Number of assistant instances for this (role, project) pair. */
+  instanceCount: number;
   existingAssistantName: string | null;
+};
+
+/** One existing assistant instance for the selected (role, project) pair. */
+export type KaneoInstanceOption = {
+  contextId: string;
+  instanceId: string | null;
+  label: string | null;
+  assistantName: string;
+  workspace: string | null;
 };
 
 export type KaneoCreateTabState = {
@@ -81,6 +97,23 @@ export type KaneoCreateTabState = {
   /** Chosen engine id; defaults to the first available engine. */
   selectedEngineId: string | null;
   selectEngine: (engineId: string) => void;
+  /** Optional label for a new parallel instance (blank = primary/auto name). */
+  instanceLabel: string;
+  setInstanceLabel: (value: string) => void;
+  /**
+   * `'new'` creates another instance; any other value is the context id of an
+   * existing instance to update in place.
+   */
+  instanceTarget: string;
+  selectInstanceTarget: (target: string) => void;
+  /** Existing instances for the currently selected (role, project) pair. */
+  existingInstances: KaneoInstanceOption[];
+  /** True when the selected target updates an existing instance. */
+  isUpdatingInstance: boolean;
+  /** True when a new instance labelled like an existing one would collide. */
+  instanceNameConflict: boolean;
+  /** Suggested label for the next parallel instance (null for the first). */
+  defaultInstanceLabel: string | null;
   connect: () => void;
   disconnect: () => void;
   canCreate: boolean;
@@ -147,6 +180,8 @@ export function useKaneoCreateTab(options: {
   const [creating, setCreating] = useState(false);
   const [engines, setEngines] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedEngineId, setSelectedEngineId] = useState<string | null>(null);
+  const [instanceLabel, setInstanceLabel] = useState('');
+  const [instanceTarget, setInstanceTarget] = useState<string>('new');
   const [lastResult, setLastResult] = useState<KaneoExplicitBindingResult | null>(null);
   const secretRef = useRef<string>('');
 
@@ -313,6 +348,18 @@ export function useKaneoCreateTab(options: {
   // role-scoped (templates.agentRole / manifest identity) all other roles
   // render as unavailable; an unbound key offers the full grid.
   const boundRole: string | null = manifest?.identity.agentRole ?? templates?.agentRole ?? null;
+  const normalizedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
+  const pairContexts: KaneoContext[] = useMemo(() => {
+    if (!selectedRole || !selectedProjectId) return [];
+    return getKaneoContexts().filter(
+      (context) =>
+        context.baseUrl === normalizedBaseUrl &&
+        (context.projectId ?? null) === selectedProjectId &&
+        context.agentRole === selectedRole
+    );
+    // `existing` is included so a post-create assistant-list refresh re-reads
+    // contexts (the store itself has no subscription).
+  }, [normalizedBaseUrl, selectedRole, selectedProjectId, existing]);
   const roles: KaneoRoleOption[] = useMemo(() => {
     if (!templates) return [];
     const project = projects.find((p) => p.id === selectedProjectId);
@@ -320,22 +367,91 @@ export function useKaneoCreateTab(options: {
       const selectable = !boundRole || boundRole === role.name;
       const expectedName = project ? kaneoProjectAssistantName(project.name, role.name) : null;
       const existingForRole = expectedName ? existing.find((a) => a.name === expectedName) : undefined;
+      const instanceCount = project
+        ? getKaneoContexts().filter(
+            (context) =>
+              context.baseUrl === normalizedBaseUrl &&
+              (context.projectId ?? null) === project.id &&
+              context.agentRole === role.name
+          ).length
+        : 0;
       return {
         name: role.name,
         description: role.description,
         selectable,
-        hasInstance: Boolean(existingForRole),
+        hasInstance: instanceCount > 0,
+        instanceCount,
         existingAssistantName: existingForRole?.name ?? null,
       };
     });
-  }, [templates, boundRole, selectedProjectId, projects, existing]);
+  }, [templates, boundRole, selectedProjectId, projects, existing, normalizedBaseUrl]);
+
+  // Existing instances of the selected pair, with their assistant names so
+  // the user can choose between creating a new parallel instance and updating
+  // one that already exists.
+  const existingInstances: KaneoInstanceOption[] = useMemo(() => {
+    const project = projects.find((p) => p.id === selectedProjectId);
+    return pairContexts.map((context) => {
+      const assistant = context.assistantId
+        ? existing.find((candidate) => candidate.id === context.assistantId)
+        : undefined;
+      return {
+        contextId: context.id,
+        instanceId: context.instanceId ?? null,
+        label: context.instanceLabel ?? null,
+        assistantName:
+          assistant?.name ??
+          (project && selectedRole ? kaneoProjectAssistantName(project.name, selectedRole, context.instanceLabel) : ''),
+        workspace: context.workspace,
+      };
+    });
+  }, [pairContexts, projects, selectedProjectId, selectedRole, existing]);
+
+  // Reset the target whenever the pair changes; the user must re-pick an
+  // existing instance deliberately.
+  useEffect(() => {
+    setInstanceTarget('new');
+  }, [selectedRole, selectedProjectId]);
+
+  // First free "Instance N" label for a parallel instance.
+  const defaultInstanceLabel = useMemo(() => {
+    if (pairContexts.length === 0) return null;
+    const used = new Set(
+      pairContexts.map((context) => (context.instanceLabel ?? '').trim().toLowerCase()).filter(Boolean)
+    );
+    let ordinal = 2;
+    while (used.has(`instance ${ordinal}`)) ordinal += 1;
+    return `Instance ${ordinal}`;
+  }, [pairContexts]);
+
+  const selectedTargetContext = pairContexts.find((context) => context.id === instanceTarget);
+  const isUpdatingInstance = Boolean(selectedTargetContext);
+  const proposedInstanceLabel = isUpdatingInstance
+    ? (selectedTargetContext?.instanceLabel ?? null)
+    : pairContexts.length === 0
+      ? instanceLabel.trim() || null
+      : instanceLabel.trim() || defaultInstanceLabel || 'Instance';
+  const selectedProject = projects.find((p) => p.id === selectedProjectId);
+  const proposedInstanceName =
+    selectedProject && selectedRole
+      ? kaneoProjectAssistantName(selectedProject.name, selectedRole, proposedInstanceLabel)
+      : null;
+  // Additional instances need unique names; two contexts sharing one name
+  // would make context → assistant recovery ambiguous.
+  const instanceNameConflict = Boolean(
+    !isUpdatingInstance &&
+    pairContexts.length > 0 &&
+    proposedInstanceName &&
+    existing.some((assistant) => assistant.name === proposedInstanceName)
+  );
 
   const canCreate = Boolean(
     connected &&
     selectedRole &&
     selectedProjectId &&
     (apiKey || secretRef.current) &&
-    configPackage?.roles[selectedRole]
+    configPackage?.roles[selectedRole] &&
+    !instanceNameConflict
   );
 
   const create = useCallback(async () => {
@@ -344,6 +460,20 @@ export function useKaneoCreateTab(options: {
     const project = projects.find((p) => p.id === selectedProjectId);
     const keyNow = apiKey || secretRef.current;
     if (!project || !keyNow) return;
+    const updatingContext = pairContexts.find((context) => context.id === instanceTarget);
+    // A pair with no instance yet creates the primary instance (historical
+    // naming/workspace). Every later create is a distinct parallel instance
+    // with its own label, context and managed workspace directory.
+    const instanceId = updatingContext
+      ? (updatingContext.instanceId ?? null)
+      : pairContexts.length > 0
+        ? newKaneoInstanceId()
+        : null;
+    const effectiveInstanceLabel = updatingContext
+      ? (updatingContext.instanceLabel ?? null)
+      : instanceId
+        ? instanceLabel.trim() || defaultInstanceLabel || 'Instance'
+        : instanceLabel.trim() || null;
     setCreating(true);
     try {
       // Import applicable skills (shared pool, idempotent overwrite).
@@ -371,6 +501,8 @@ export function useKaneoCreateTab(options: {
         baseUrl: baseUrl.trim(),
         project: { id: project.id, name: project.name, slug: project.slug },
         role,
+        instanceId,
+        instanceLabel: effectiveInstanceLabel,
         agentsMd: configPackage.roles[role],
         description,
         enabledSkills,
@@ -403,6 +535,8 @@ export function useKaneoCreateTab(options: {
       }
 
       setLastResult(result);
+      setInstanceLabel('');
+      setInstanceTarget('new');
       // Rotation complete: drop the plaintext immediately after the PUT.
       releaseSecrets();
       onCreated?.(result.assistantId);
@@ -421,6 +555,10 @@ export function useKaneoCreateTab(options: {
     existing,
     onCreated,
     projects,
+    pairContexts,
+    instanceTarget,
+    instanceLabel,
+    defaultInstanceLabel,
     releaseSecrets,
     selectedEngineId,
     selectedProjectId,
@@ -449,6 +587,14 @@ export function useKaneoCreateTab(options: {
     engines,
     selectedEngineId,
     selectEngine: setSelectedEngineId,
+    instanceLabel,
+    setInstanceLabel,
+    instanceTarget,
+    selectInstanceTarget: setInstanceTarget,
+    existingInstances,
+    isUpdatingInstance,
+    instanceNameConflict,
+    defaultInstanceLabel,
     connect,
     disconnect,
     canCreate,

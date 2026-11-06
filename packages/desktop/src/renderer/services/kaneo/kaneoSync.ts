@@ -42,6 +42,7 @@ import {
   type KaneoContextRepository,
   contextFromManifest,
   getKaneoContexts,
+  kaneoInstanceWorkspaceSegment,
   newKaneoContextId,
   updateKaneoContext,
   upsertKaneoContext,
@@ -55,9 +56,14 @@ export function kaneoAssistantName(role: string): string {
   return `${KANEO_ASSISTANT_NAME_PREFIX}${role}`;
 }
 
-/** Project-bound assistant name: `Kaneo · <projectName> · <role>`. */
-export function kaneoProjectAssistantName(projectName: string, role: string): string {
-  return `${KANEO_ASSISTANT_NAME_PREFIX}${projectName} · ${role}`;
+/**
+ * Project-bound assistant name: `Kaneo · <projectName> · <role>` for the
+ * primary instance, with ` · <instanceLabel>` appended for parallel instances.
+ */
+export function kaneoProjectAssistantName(projectName: string, role: string, instanceLabel?: string | null): string {
+  const base = `${KANEO_ASSISTANT_NAME_PREFIX}${projectName} · ${role}`;
+  const label = instanceLabel?.trim();
+  return label ? `${base} · ${label}` : base;
 }
 
 export function kaneoSkillName(skill: string): string {
@@ -243,9 +249,19 @@ export function appendEnvironmentSegment(rules: string, segment: string): string
  * and return its absolute path. Calls the backend's dedicated
  * `/api/fs/kaneo-workspace` endpoint, which validates the slug/role and
  * creates `{managed-root}/kaneo-workspaces/<slug>/<role>/`.
+ *
+ * Parallel instances of the same role pass a distinct workspace segment
+ * (`<role>-<label>-<token>`), which the endpoint treats as the directory
+ * component, so every instance gets its own clone directory.
  */
-export async function allocateKaneoWorkspace(projectSlug: string, role: string): Promise<string> {
-  const dir = await ipcBridge.kaneoWorkspace.ensure.invoke({ project_slug: projectSlug, role });
+export async function allocateKaneoWorkspace(
+  projectSlug: string,
+  role: string,
+  instanceId?: string | null,
+  instanceLabel?: string | null
+): Promise<string> {
+  const segment = kaneoInstanceWorkspaceSegment(role, instanceId, instanceLabel);
+  const dir = await ipcBridge.kaneoWorkspace.ensure.invoke({ project_slug: projectSlug, role: segment });
   return dir;
 }
 
@@ -270,9 +286,10 @@ export function findKaneoAssistant(assistants: Assistant[], role: string): Assis
  * Project-bound context: hide every other `Kaneo · <project> · *` assistant of
  * the same project (the key only authorizes one role there) while keeping
  * Kaneo assistants from other projects and all non-Kaneo assistants visible.
- * Project-less (legacy) context: fall back to the legacy role filter — hide
- * every `Kaneo · <role>` assistant other than the bound role. In both cases
- * the full list is returned when the bound assistant does not exist yet.
+ * Every parallel instance sharing the project+role stays visible (their names
+ * are `<base>` or `<base> · <label>`). Project-less (legacy) context: fall
+ * back to the legacy role filter. In both cases the full list is returned
+ * when the bound assistant does not exist yet.
  */
 export function filterAssistantsForKaneoContext<T extends { name: string }>(
   assistants: T[],
@@ -281,18 +298,20 @@ export function filterAssistantsForKaneoContext<T extends { name: string }>(
   if (!context) return assistants;
   if (!context.projectName) {
     // Legacy role filter (migrated unbound context).
-    const targetName = kaneoAssistantName(context.agentRole);
-    const hasTarget = assistants.some((assistant) => assistant.name === targetName);
+    const roleName = kaneoAssistantName(context.agentRole);
+    const isTarget = (name: string): boolean => name === roleName || name.startsWith(`${roleName} · `);
+    const hasTarget = assistants.some((assistant) => isTarget(assistant.name));
     if (!hasTarget) return assistants;
     return assistants.filter(
-      (assistant) => !assistant.name.startsWith(KANEO_ASSISTANT_NAME_PREFIX) || assistant.name === targetName
+      (assistant) => !assistant.name.startsWith(KANEO_ASSISTANT_NAME_PREFIX) || isTarget(assistant.name)
     );
   }
-  const targetName = kaneoProjectAssistantName(context.projectName, context.agentRole);
-  const hasTarget = assistants.some((assistant) => assistant.name === targetName);
+  const roleName = kaneoProjectAssistantName(context.projectName, context.agentRole);
+  const isTarget = (name: string): boolean => name === roleName || name.startsWith(`${roleName} · `);
+  const hasTarget = assistants.some((assistant) => isTarget(assistant.name));
   if (!hasTarget) return assistants;
   const projectPrefix = kaneoProjectAssistantName(context.projectName, '');
-  return assistants.filter((assistant) => !assistant.name.startsWith(projectPrefix) || assistant.name === targetName);
+  return assistants.filter((assistant) => !assistant.name.startsWith(projectPrefix) || isTarget(assistant.name));
 }
 
 /**
@@ -684,7 +703,8 @@ export async function syncKaneoAssistantsFromManifest(options: {
   // Drift detection against the stored context (if any).
   const existingContexts = await getKaneoContextsSnapshot();
   const previous = existingContexts.find(
-    (c) => c.baseUrl === baseUrl && c.projectId === project.id && c.agentRole === role
+    (c) =>
+      c.baseUrl === baseUrl && c.projectId === project.id && c.agentRole === role && (c.instanceId ?? null) === null
   );
   const envDrift = Boolean(previous?.manifestSummary && previous.manifestSummary.envHash !== manifest.envHash);
   // A manifest change that alters repositories is covered by envHash drift.
@@ -817,12 +837,22 @@ export type KaneoExplicitBindingResult = {
   reusedExisting: boolean;
 };
 
-/** Options for the explicit (role, project) binding sync from the create tab. */
+/** Options for the explicit (role, project, instance) binding sync from the create tab. */
 export type KaneoExplicitBindingOptions = {
   baseUrl: string;
   /** The instance's project the role is bound to (from the tab picker). */
   project: { id: string; name: string; slug: string };
   role: string;
+  /**
+   * Instance id for parallel assistants sharing one (role, project) pair.
+   * Null/omitted targets the primary instance (historical behavior).
+   */
+  instanceId?: string | null;
+  /**
+   * Display label appended to the assistant name for extra instances.
+   * Ignored for the primary instance.
+   */
+  instanceLabel?: string | null;
   /** Role AGENTS.md content from the config package. */
   agentsMd: string;
   /** Description for the assistant (from templates). */
@@ -860,13 +890,27 @@ export type KaneoExplicitBindingOptions = {
 export async function syncKaneoAssistantForBinding(
   options: KaneoExplicitBindingOptions
 ): Promise<KaneoExplicitBindingResult> {
-  const { baseUrl, project, role, agentsMd, description, enabledSkills, existing, agentId, manifest, repoIntegration } =
-    options;
+  const {
+    baseUrl,
+    project,
+    role,
+    instanceId: requestedInstanceId,
+    instanceLabel: requestedInstanceLabel,
+    agentsMd,
+    description,
+    enabledSkills,
+    existing,
+    agentId,
+    manifest,
+    repoIntegration,
+  } = options;
   if (!agentsMd.trim()) {
     throw new Error(`Role "${role}" has no AGENTS.md in the Kaneo config package`);
   }
   const trimmedBase = baseUrl.trim().replace(/\/+$/, '');
-  const workspace = await allocateKaneoWorkspace(project.slug, role);
+  const instanceId = requestedInstanceId ?? null;
+  const instanceLabel = instanceId ? requestedInstanceLabel?.trim() || 'Instance' : null;
+  const workspace = await allocateKaneoWorkspace(project.slug, role, instanceId, instanceLabel);
 
   // Rules content: role AGENTS.md plus, when repo facts are available, the
   // rendered project environment segment (replacing any prior segment). A
@@ -880,7 +924,7 @@ export async function syncKaneoAssistantForBinding(
   } else if (repoIntegration) {
     rules = appendEnvironmentSegment(agentsMd, renderRepoIntegrationSegment(repoIntegration));
   }
-  const name = kaneoProjectAssistantName(project.name, role);
+  const name = kaneoProjectAssistantName(project.name, role, instanceLabel);
   const rolePrompt = buildClaimPrompt(role, trimmedBase);
 
   let defaultAgentId: string | undefined = agentId;
@@ -896,7 +940,11 @@ export async function syncKaneoAssistantForBinding(
   // Match a previous instance first by its stored context, then by name so a
   // fresh import cannot collide with an old naming.
   const previousContext = getKaneoContexts().find(
-    (c) => c.baseUrl === trimmedBase && (c.projectId ?? null) === project.id && c.agentRole === role
+    (c) =>
+      c.baseUrl === trimmedBase &&
+      (c.projectId ?? null) === project.id &&
+      c.agentRole === role &&
+      (c.instanceId ?? null) === instanceId
   );
   const existingAssistant =
     (previousContext?.assistantId && existing.find((a) => a.id === previousContext.assistantId)) ||
@@ -970,6 +1018,8 @@ export async function syncKaneoAssistantForBinding(
     id: newKaneoContextId(),
     baseUrl: trimmedBase,
     agentRole: role,
+    instanceId,
+    instanceLabel,
     projectId: project.id,
     projectName: project.name,
     projectSlug: project.slug,
